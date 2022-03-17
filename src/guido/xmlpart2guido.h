@@ -216,7 +216,7 @@ protected:
 
     std::string parseMetronome ( metronomevisitor &mv );
     
-    void parseWedge(MusicXML2::xmlelement *elt, int staff);
+    bool parseWedge(MusicXML2::xmlelement *elt, int staff);
     
     void parseOctaveShift(MusicXML2::xmlelement *elt, int staff);
     /// creates an Octave Shift for Guido.
@@ -229,6 +229,9 @@ protected:
     rational durationInCue;
     
     std::map<int, float> fStaffDistance;
+    
+    Sguidoelement wedgeStopTag;
+    void checkWedgeStop();
         
 public:
     xmlpart2guido(bool generateComments, bool generateStem, bool generateBar = true, int startMeasure = 0, int endMeasure = 0, int endMeasureOffset = 0);

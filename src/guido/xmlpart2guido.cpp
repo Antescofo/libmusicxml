@@ -208,8 +208,8 @@ bool xmlpart2guido::checkMeasureRange() {
 void xmlpart2guido::checkOctavaBegin() {
     // Generate Octave-shifts on current measure and current time
     std::string currMeasure = fCurrentMeasure->getAttributeValue("number");
-    bool found = octavas.count(currMeasure);
-    if (found) {
+
+    if (octavas.count(currMeasure)) {
         for (auto o = octavas[currMeasure].cbegin(); o != octavas[currMeasure].cend(); ) {
             // o.second points to pair< time, type >
             if ( o->first < fCurrentVoicePosition && o->second != 0) {
@@ -261,8 +261,7 @@ void xmlpart2guido::checkOctavaEnd() {
     }
     
     //______________________________________________________________________________
-    void xmlpart2guido::visitStart ( S_backup& elt )
-    {
+    void xmlpart2guido::visitStart ( S_backup& elt )    {
         stackClean();	// closes pending chords, cue and grace
         int duration = elt->getIntValue(k_duration, 0);
         if (duration) {
@@ -454,6 +453,7 @@ void xmlpart2guido::checkOctavaEnd() {
     void xmlpart2guido::visitEnd ( S_measure& elt )
     {
         stackClean();	// closes pending chords, cue and grace
+        checkWedgeStop(); // Closes pending Wedge that should close on "next" event but not when just before measure ending.
         checkVoiceTime (fCurrentMeasureLength, fCurrentVoicePosition);
         
         if (!fInhibitNextBar) {
@@ -496,11 +496,10 @@ void xmlpart2guido::checkOctavaEnd() {
         if (!fSkipDirection) {
             int lineNumber = elt->getInputLineNumber();
             auto it = std::find(processedDirections.begin(), processedDirections.end(), lineNumber);
-            if (it == processedDirections.end()) {
-                processedDirections.push_back(lineNumber);
-            }else {
+            if (it != processedDirections.end()) {
                 fSkipDirection = true;
             }
+            // processed directions are added at the end of the visit
         }
         
         if (!fSkipDirection) {
@@ -512,7 +511,6 @@ void xmlpart2guido::checkOctavaEnd() {
     void xmlpart2guido::visitEnd ( S_direction& elt )
     {
         // !IMPORTANT: Avoid using default-x directly and use timePositions methods instead for all horizontal positioning of Directions, since it is relative to the beginning of a measure.
-        
         if (fSkipDirection) {
             // set back to false for next elements!
             fSkipDirection = false;
@@ -577,6 +575,8 @@ void xmlpart2guido::checkOctavaEnd() {
         string wordParameterBuffer = "";    // used if generateCompositeDynamic
         
         auto branches = elt->elements();
+        
+        bool directionProcessed = true;
         
         for (iter = elt->lbegin(); iter != elt->lend(); iter++) {
             // S_Direction can accept direction_type, offset, footnote, level, voice, staff
@@ -945,7 +945,7 @@ void xmlpart2guido::checkOctavaEnd() {
                             
                         case k_wedge:
                         {
-                            parseWedge(element, directionStaff);
+                            directionProcessed = parseWedge(element, directionStaff);
                         }
                         break;
                             
@@ -954,6 +954,10 @@ void xmlpart2guido::checkOctavaEnd() {
                     }
                 }
             }
+        }
+        
+        if (directionProcessed) {
+            processedDirections.push_back(elt->getInputLineNumber());
         }
         
         // If composed tag, add here
@@ -1025,12 +1029,11 @@ void xmlpart2guido::checkOctavaEnd() {
         add(tag);
     }
     
-void xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
+bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
 {
     if (elt->getType() != k_wedge) {
-        return;
+        return false;
     }
-        
     string type = elt->getAttributeValue("type");
     int number = elt->getAttributeIntValue("number", 1);
     Sguidoelement tag;
@@ -1043,7 +1046,6 @@ void xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
         fDiminPending = number;
     }
     else if (type == "stop") {
-                
         if (fCrescPending == number) {
             tag = guidotag::create("crescEnd");
             fCrescPending = 0;
@@ -1163,8 +1165,23 @@ void xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
             addDelayed(tag, fCurrentOffset);
         }
         else {
-            add (tag);
+            // IMPORTANT: Wedge Stop should be added "after" the
+            if (type != "stop") {
+                add (tag);
+            } else {
+                wedgeStopTag = tag;
+            }
         }
+        
+        return true;
+    }
+    return false;
+}
+
+void xmlpart2guido::checkWedgeStop() {
+    if (wedgeStopTag) {
+        add(wedgeStopTag);
+        wedgeStopTag = 0;
     }
 }
     
@@ -2924,14 +2941,15 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
             Sguidoelement accForce = guidotag::create("acc");
             push(accForce);
             forcedAccidental = true;
-        } else {
-            if ((nv.getType() != kRest) && printObject) {
-                Sguidoelement accForce = guidotag::create("acc");
-                accForce->add (guidoparam::create("\"none\"", false));
-                push(accForce);
-                forcedAccidental = true;
-            }
         }
+//        else {
+//            if ((nv.getType() != kRest) && printObject) {
+//                Sguidoelement accForce = guidotag::create("acc");
+//                accForce->add (guidoparam::create("\"none\"", false));
+//                push(accForce);
+//                forcedAccidental = true;
+//            }
+//        }
         
         /// Add Note head of X offset for note if necessary
         bool noteFormat = false;
@@ -3171,6 +3189,8 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
         checkDelayed (getDuration(), false);        // check for delayed elements (directions with offset) and indicated before = false
         
         checkOctavaEnd();
+        
+        checkWedgeStop();
 
         fMeasureEmpty = false;
     }
