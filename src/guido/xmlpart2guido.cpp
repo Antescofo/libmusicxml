@@ -2914,6 +2914,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
         if (!nv.fCautionary.empty() && printObject)
         {
             Sguidoelement accForce = guidotag::create("acc");
+            accForce->add (guidoparam::create("\"cautionary\"", false));
             push(accForce);
             forcedAccidental = true;
         }
@@ -2923,6 +2924,13 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
             Sguidoelement accForce = guidotag::create("acc");
             push(accForce);
             forcedAccidental = true;
+        } else {
+            if ((nv.getType() != kRest) && printObject) {
+                Sguidoelement accForce = guidotag::create("acc");
+                accForce->add (guidoparam::create("\"none\"", false));
+                push(accForce);
+                forcedAccidental = true;
+            }
         }
         
         /// Add Note head of X offset for note if necessary
