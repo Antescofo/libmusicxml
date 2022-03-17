@@ -1736,18 +1736,19 @@ bool xmlpart2guido::isSlurClosing(S_slur elt) {
             {
                 ctree<xmlelement>::iterator iterSlur;
                 iterSlur = iter->find(k_slur);
-                if (iterSlur != iter->end())
-                {
+                while (iterSlur != iter->end()) {
                     
-//                    if ((iterSlur->getAttributeValue("type")=="start") &&
-//                        ((iterSlur->getAttributeIntValue("number", 0) == internalXMLSlurNumber)) &&
-//                        (thisNoteVoice == fTargetVoice)) {
-//                        return false;
-//                    }
+                    //                    if ((iterSlur->getAttributeValue("type")=="start") &&
+                    //                        ((iterSlur->getAttributeIntValue("number", 0) == internalXMLSlurNumber)) &&
+                    //                        (thisNoteVoice == fTargetVoice)) {
+                    //                        return false;
+                    //                    }
+
                     
                     if ((iterSlur->getAttributeValue("type")=="stop") &&
                         (iterSlur->getAttributeIntValue("number", 0) == internalXMLSlurNumber)
                         ) {
+                        
                         if (thisNoteVoice == fTargetVoice) {
                             //cerr<< "\t\t\t FOUND Slur stop line:"<< iterSlur->getInputLineNumber()<< " voice:"<<thisNoteVoice<<" number:"<<iterSlur->getAttributeIntValue("number", 0)<<endl;
 
@@ -1756,6 +1757,8 @@ bool xmlpart2guido::isSlurClosing(S_slur elt) {
                             return false;   // we found the same slur numbering with "stop" on another voice!
                         }
                     }
+                    
+                    iterSlur = iter->find(k_slur, iterSlur++);
                 }
             }
         }
@@ -2229,22 +2232,22 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
         Sguidoelement tag;
         if (stem) {
             if (stem->getValue() == "down") {
-                //if (fCurrentStemDirection != kStemDown || fInCue) {
+                if (fCurrentStemDirection != kStemDown || fInCue) {
                 tag = guidotag::create("stemsDown");
                 fCurrentStemDirection = kStemDown;
-                //}
+                }
             }
             else if (stem->getValue() == "up") {
-                //if (fCurrentStemDirection != kStemUp || fInCue) {
+                if (fCurrentStemDirection != kStemUp || fInCue) {
                 tag = guidotag::create("stemsUp");
                 fCurrentStemDirection = kStemUp;
-                //}
+                }
             }
             else if (stem->getValue() == "none") {
-                //if (fCurrentStemDirection != kStemNone || fInCue) {
+                if (fCurrentStemDirection != kStemNone || fInCue) {
                 tag = guidotag::create("stemsOff");
                 fCurrentStemDirection = kStemNone;
-                //}
+                }
             }
             else if (stem->getValue() == "double") {
             }
