@@ -1181,7 +1181,7 @@ bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
 void xmlpart2guido::checkWedgeStop() {
     if (wedgeStopTag) {
         add(wedgeStopTag);
-        wedgeStopTag = 0;
+        wedgeStopTag = nullptr;
     }
 }
     
@@ -2056,31 +2056,25 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
             
             /// Determine the graphical format inside Tuplet
             std::string dispNotePar ;
-            int dy1offset = 6;
             if (tupletGraphicType=="64th")
             {
                 dispNotePar = "\"/64\"";
-                dy1offset+=4;
             }
             if (tupletGraphicType=="32nd")
             {
                 dispNotePar = "\"/32\"";
-                dy1offset+=4;
             }
             else if (tupletGraphicType=="16th")
             {
                 dispNotePar = "\"/16\"";
-                dy1offset+=3;
             }
             else if (tupletGraphicType=="eighth")
             {
                 dispNotePar = "\"/8\"";
-                dy1offset+=2;
             }
             else if (tupletGraphicType=="quarter")
             {
                 dispNotePar = "\"/4\"";
-                dy1offset+=1;
             }
             else if (tupletGraphicType=="half")
             {
@@ -2089,7 +2083,6 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
             else if (tupletGraphicType=="whole")
             {
                 dispNotePar = "\"/1\"";
-                dy1offset-=5;
             }
 
             /// Generate tag and parameters

@@ -267,6 +267,8 @@ void notevisitor::visitEnd ( S_note& elt )
                 noteHeadGuidoType << "square";
             else if (noteHeadXML == "square")
                 noteHeadGuidoType << "square";
+            else if (noteHeadXML == "none")
+                noteHeadGuidoType << "none";
             else
                 noteHeadGuidoType << "";
             
