@@ -60,6 +60,7 @@ public visitor<S_part>,
 public visitor<S_repeat>,
 public visitor<S_segno>,
 public visitor<S_sound>,
+public visitor<S_harmony>,
 public visitor<S_attributes>         // to get clef, division, staves, time and key in order!
 {
     // the guido elements stack
@@ -213,6 +214,7 @@ protected:
     virtual void visitEnd  ( S_sound& elt);
     virtual void visitEnd  ( S_time& elt);
     virtual void visitEnd  ( S_part& elt);
+    virtual void visitEnd  ( S_harmony& elt);
 
     std::string parseMetronome ( metronomevisitor &mv );
     
