@@ -1129,7 +1129,10 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
     }else if (bass_alter == -1) {
         bass_alter_char = "&";
     }
-    std::string bass = bas_step + bass_alter_char;
+    std::string bass="";
+    if (!bas_step.empty()) {
+        bass = "/" + bas_step + bass_alter_char;
+    }
     
     std::string harmonyText = root + root_alter_char + guido_kind_value + bass;
     
@@ -1138,7 +1141,30 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
     
     xml2guidovisitor::addPosY(elt, tag, -6, 1);
 
-    add(tag);
+    int offset = elt->getIntValue(k_offset, 0);
+    if (offset == 0) {
+        add(tag);
+    }else if (offset > 0) {
+        addDelayed(tag, offset);
+    }else {
+        int directionStaff = 0;
+        if (elt->find(k_staff) != elt->end()) {
+            checkStaff(elt->getIntValue(k_staff, 1));
+            directionStaff = elt->getIntValue(k_staff, 0);
+        }
+        
+        rational roffset(offset, fCurrentDivision*4);
+        float dx = timePositions.getDxForElement(elt, fCurrentVoicePosition.toDouble(), fCurrentMeasure->getAttributeValue("number"), 0, directionStaff, roffset.toDouble());
+        //cerr<<"Negative Offset "<<offset<<" ->"<<dx<<" on "<< harmonyText<<endl;
+        if (dx==-999) {
+            return; // Return if no corresponding default-x event is found
+        }else {
+            stringstream s;
+            s << "dx=" << dx << "hs";
+            tag->add (guidoparam::create(s.str(), false));
+            add(tag);
+        }
+    }
     
 }
     
@@ -3363,21 +3389,6 @@ bool xmlpart2guido::findNextNote(MusicXML2::xmlelement *elt, MusicXML2::xmleleme
     }
     return false;
 
-}
-
-void xmlpart2guido::addPositionOrPlacementToNote(const notevisitor& nv, Sxmlelement elt, Sguidoelement& tag, float offset) {
-    float default_y = (float)(elt->getAttributeIntValue("default-y", 0));
-    if (default_y != 0) {
-        float posy = (default_y / 10) * 2;  // convert to half space
-        addPosYforNoteHead(nv, posy, tag, offset); // offset to bypass note-head // posy > 0.0 ? 2.0 : 0.0
-    }else {
-        std::string placement = elt->getAttributeValue("placement");
-        if (placement.size() > 0) {
-            stringstream s;
-            s << "position=\""<<placement<<"\"";
-            tag->add (guidoparam::create(s.str(), false));
-        }
-    }
 }
 
 void xmlpart2guido::addDyFromNoteOrStaff(const notevisitor& nv, Sxmlelement elt, Sguidoelement& tag) {

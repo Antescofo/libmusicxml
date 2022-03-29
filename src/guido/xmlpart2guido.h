@@ -272,10 +272,7 @@ private:
     
     void addPosYforNoteHead(const notevisitor& nv, Sxmlelement elt, Sguidoelement& tag, float offset);
     void addPosYforNoteHead(const notevisitor& nv, float xmlY, Sguidoelement& tag, float offset);
-    
-    /// If default-y exist and defiined with regards to staff, convert it to dY based on note head position and add to tag parameters. Otherwise, use Placement if exists.
-    void addPositionOrPlacementToNote(const notevisitor& nv, Sxmlelement elt, Sguidoelement& tag, float offset);
-    
+        
     /// Adds `dy` to the tag : if associated note to the element is below the top staff, it uses distance to top staff (musicxml default-y), otherwise distance to notehead.
     /// Used for Bow tags.
     void addDyFromNoteOrStaff(const notevisitor& nv, Sxmlelement elt, Sguidoelement& tag);
