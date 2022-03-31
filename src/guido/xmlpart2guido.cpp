@@ -1005,7 +1005,7 @@ void xmlpart2guido::checkOctavaEnd() {
     }
 
 void xmlpart2guido::visitEnd(S_harmony& elt) {
-    if (fSkipDirection) return;
+    if (fNotesOnly) return;
     
     // Note: Numeral and Function Harmonies are not supported yet in GuidoLib
     if (elt->find(k_function) != elt->end())
@@ -1024,101 +1024,11 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
         root_alter_char = "&";
     }
     
-    std::string kind = elt->getValue(k_kind);
     // parse kind-value: https://w3c.github.io/musicxml/musicxml-reference/data-types/kind-value/
     std::string guido_kind_value;
-    if (kind == "augmented") {
-        guido_kind_value = "3";
-    } else
-    if (kind == "augmented-seventh") {
-        guido_kind_value = "aug7";
-    } else
-    if (kind == "diminished") {
-        guido_kind_value = "dim5";
-    } else
-    if (kind == "diminished-seventh") {
-        guido_kind_value = "dim7";
-    } else
-    if (kind == "dominant") {
-        guido_kind_value = "7";
-    } else
-    if (kind == "dominant-11th") {
-        guido_kind_value = "11";
-    } else
-    if (kind == "dominant-13th") {
-        guido_kind_value = "13";
-    } else
-    if (kind == "dominant-ninth") {
-        guido_kind_value = "9";
-    }else
-    if (kind == "French") {
-        guido_kind_value = "Fr+6";
-    } else
-    if (kind == "German") {
-        guido_kind_value = "Ger+6";
-    } else
-    if (kind == "half-diminished") {
-        guido_kind_value = "13";
-    } else
-    if (kind == "Italian") {
-        guido_kind_value = "It+6";
-    }else
-    if (kind == "major") {
-        guido_kind_value = "";
-    }else
-    if (kind == "major-11th") {
-        guido_kind_value = "maj11";
-    } else
-    if (kind == "major-13th") {
-        guido_kind_value = "maj13";
-    } else
-    if (kind == "major-minor") {
-        guido_kind_value = "mMaj7";
-    } else
-    if (kind == "major-ninth") {
-        guido_kind_value = "maj9";
-    }else
-    if (kind == "major-seventh") {
-        guido_kind_value = "maj7";
-    }else
-    if (kind == "major-sixth") {
-        guido_kind_value = "maj6";
-    }else
-    if (kind == "minor") {
-        guido_kind_value = "m";
-    }else
-    if (kind == "minor-11th") {
-        guido_kind_value = "m11";
-    } else
-    if (kind == "minor-13th") {
-        guido_kind_value = "13";
-    } else
-    if (kind == "minor-ninth") {
-        guido_kind_value = "m9";
-    }else
-    if (kind == "minor-seventh") {
-        guido_kind_value = "m7";
-    }else
-    if (kind == "minor-sixth") {
-        guido_kind_value = "m6";
-    }else
-    if (kind == "Neapolitan") {
-        guido_kind_value = "N6";
-    }else
-    if (kind == "power") {
-        guido_kind_value = "5";
-    }else
-    if (kind == "pedal") {
-        guido_kind_value = "pedal";
-    }else
-    if (kind == "suspended-fourth") {
-        guido_kind_value = "Sus4";
-    }else
-    if (kind == "suspended-second") {
-        guido_kind_value = "Sus2";
-    }else
-    if (kind == "Tristan") {
-        guido_kind_value = "m7b5";
+    auto kindElement = elt->find(k_kind);
+    if (kindElement != elt->end()) {
+        guido_kind_value = kindElement->getAttributeValue("text");
     }
     
     std::string bas_step = elt->getValue(k_bass_step);
@@ -1144,8 +1054,6 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
     int offset = elt->getIntValue(k_offset, 0);
     if (offset == 0) {
         add(tag);
-    }else if (offset > 0) {
-        addDelayed(tag, offset);
     }else {
         int directionStaff = 0;
         if (elt->find(k_staff) != elt->end()) {
