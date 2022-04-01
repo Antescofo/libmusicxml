@@ -1010,6 +1010,11 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
     // Note: Numeral and Function Harmonies are not supported yet in GuidoLib
     if (elt->find(k_function) != elt->end())
         return;
+    
+    // Skip if it doesn't belong to target staff
+    if ((elt->getIntValue(k_staff, 1) != fTargetStaff) ) {
+        return;
+    }
 
     Sguidoelement tag = guidotag::create("harmony");
     
