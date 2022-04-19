@@ -32,6 +32,8 @@ OPTIONS :=  -s ALLOW_MEMORY_GROWTH=0 -s TOTAL_MEMORY=134217728 -s DISABLE_EXCEPT
 
 target = $(library).js
 
+.PHONY: npm
+
 all :
 	make $(target)
 
@@ -67,8 +69,8 @@ $(npmdir)/$(library).js : $(library).js
 ##############################################################
 # building the library as web assembly
 ##############################################################
-$(library).js : $(objects)
-	emcc -O3 --bind --memory-init-file 0 $(objects) -o $@ $(OPTIONS) -s WASM=0
+$(library).js : $(objects) Makefile
+	emcc -O3 --bind --memory-init-file 0 $(objects) -o $@ $(OPTIONS) -s WASM=1
 
 clean:
 	rm -f $(objects) $(target)
