@@ -73,6 +73,7 @@ namespace MusicXML2
         fShouldStopOctava = false;
         fCurrentScorePosition.set(0, 1);
         measurePositionMap.clear();
+        timeSignatureMap.clear();
     }
     
     //______________________________________________________________________________
@@ -1458,6 +1459,11 @@ std::string xmlpart2guido::parseMetronome ( metronomevisitor &mv )
                 s >> timesign;
             }
             
+            // Add to map
+            if (fCurrentTimeSign.getNumerator() != 0) {
+                auto timeSig = make_pair(fCurrentTimeSign.getNumerator(), fCurrentTimeSign.getDenominator());
+                timeSignatureMap[fCurrentScorePosition.toDouble()] = timeSig;
+            }
         }
         if (fNotesOnly) return;
         

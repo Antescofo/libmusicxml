@@ -256,6 +256,9 @@ public:
     
     std::map<double, int> measurePositionMap;
     
+    /// Map containing time-signatures on position (double output of Rational)
+    std::map<double, std::pair<int, int>> timeSignatureMap;
+    
     double totalPartDuration() { return fCurrentScorePosition.toDouble(); }
     
     /// List of already processed Directions in other voices/staves to skip

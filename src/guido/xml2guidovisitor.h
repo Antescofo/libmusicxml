@@ -124,6 +124,9 @@ protected:
     /// Map containing measure number and Position (double output of Rational)
     std::map<double, int> measurePositionMap;
     
+    /// Map containing time-signatures on position (double output of Rational)
+    std::map<double, std::pair<int, int>> timeSignatureMap;
+    
     double fTotalDuration;
     
 public:
@@ -189,6 +192,9 @@ public:
     
     /// Returns a map<double,int> where the first are beat positions and second are measure numbers
     std::map<double, int> getMeasureMap();
+    
+    /// Returns a map<double,int> where the first are beat positions and second are measure numbers
+    std::map<double, std::pair<int, int>> getTimeSignatureMap();
     
     double getTotalDuration();
     

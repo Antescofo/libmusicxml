@@ -291,6 +291,7 @@ namespace MusicXML2
             }
                         
             //// Browse XML and convert
+            //cerr<<"<<< Browse staff "<<targetStaff<<" voice:"<< targetVoice<<endl;
             xmlpart2guido pv(fGenerateComments, fGenerateStem, fGenerateBars, fBeginMeasure, fEndMeasure, fEndMeasureOffset);
             pv.generatePositions (fGeneratePositions);
             xml_tree_browser browser(&pv);
@@ -310,6 +311,7 @@ namespace MusicXML2
                 fTotalMeasures = pv.lastMeasureNumber();
             }
             measurePositionMap = pv.measurePositionMap;
+            timeSignatureMap = pv.timeSignatureMap;
             
             if (pv.totalPartDuration() > fTotalDuration) {
                 fTotalDuration = pv.totalPartDuration();
@@ -554,6 +556,10 @@ int xml2guidovisitor::getTotalMeasures() {
 
 std::map<double, int> xml2guidovisitor::getMeasureMap() {
     return measurePositionMap;
+}
+
+std::map<double, std::pair<int, int>> xml2guidovisitor::getTimeSignatureMap() {
+    return timeSignatureMap;
 }
     
 double xml2guidovisitor::getTotalDuration() {
