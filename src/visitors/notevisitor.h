@@ -166,6 +166,7 @@ class EXP notevisitor :
 		virtual const std::vector<S_tuplet>&	getTuplet() const	{ return fTuplet; }
         virtual const std::vector<S_lyric>&	getLyric() const	{ return fLyric; }
         virtual const std::string&  getSyllabic() const		{ return fSyllabic; }
+        virtual const std::string&  getLyricJustification() const  { return fLyricJustify; }
         virtual const std::string&  getLyricText() const		{ return fLyricText; }
         virtual const float&  getLyricDy() const		{ return fLyricsDy; }
 
@@ -259,6 +260,7 @@ class EXP notevisitor :
 
 		std::vector<S_lyric>	fLyric;
         std::string fSyllabic;
+        std::string fLyricJustify;
         std::string fLyricText;
         float fLyricsDy;
     

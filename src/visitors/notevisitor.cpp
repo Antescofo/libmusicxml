@@ -79,6 +79,7 @@ void notevisitor::reset ()
     fLyric.clear();
     fSyllabic = "";
     fLyricText="";
+    fLyricJustify="";
     fGraphicType="";
     fAccidental = "";
     fCautionary = "";
@@ -198,6 +199,8 @@ void notevisitor::print (ostream& out) const
         
         /// Get content information:
         fSyllabic = elt->getValue(k_syllabic);
+        
+        fLyricJustify = elt->getAttributeValue("justify");
         
         /// Browse inside and take into account elision which translates to "~"
         auto lyrText = elt->find(k_text);

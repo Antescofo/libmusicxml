@@ -2234,6 +2234,25 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
             std::replace( newTxt.begin(), newTxt.end(), ' ', '~');
             tag->add (guidoparam::create(newTxt, true));
             
+            // add justification if any
+            std::string justify = notevisitor::getLyricJustification();
+            if (!justify.empty()) {
+                std::string guidoTextFormat = "";
+                if (justify == "left") {
+                    guidoTextFormat = "textformat=\"l\"";
+                }else
+                    if (justify == "right") {
+                        guidoTextFormat = "textformat=\"r\"";
+                    }else
+                        if (justify == "center") {
+                            guidoTextFormat = "textformat=\"c\"";
+                        }
+                
+                if (!guidoTextFormat.empty()) {
+                    tag->add(guidoparam::create(guidoTextFormat, false));
+                }
+            }
+            
             /// Adjust Y-Position by infering from XML
             //tag->add (guidoparam::create(notevisitor::getLyricDy(), false));
             std::string autoPosParam="autopos=\"on\"";
@@ -2257,6 +2276,27 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
                 newTxt.append("-");
             }
             tag->add (guidoparam::create(newTxt, true));
+            
+            // add justification if any
+            std::string justify = notevisitor::getLyricJustification();
+            if (!justify.empty()) {
+                std::string guidoTextFormat = "";
+                if (justify == "left") {
+                    guidoTextFormat = "textformat=\"l\"";
+                }else
+                    if (justify == "right") {
+                        guidoTextFormat = "textformat=\"r\"";
+                    }else
+                        if (justify == "center") {
+                            guidoTextFormat = "textformat=\"c\"";
+                        }
+                
+                if (!guidoTextFormat.empty()) {
+                    tag->add(guidoparam::create(guidoTextFormat, false));
+                }
+            }
+            
+            
             //tag->add (guidoparam::create(notevisitor::getLyricDy(), false));
             std::string autoPosParam="autopos=\"on\"";
             tag->add(guidoparam::create(autoPosParam, false));
