@@ -15,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <cmath>
+#include <regex>
 
 
 #include "conversions.h"
@@ -758,7 +759,10 @@ void xmlpart2guido::checkOctavaEnd() {
                                 break;
                             }
                             
-                            wordParameters << wordPrefix <<"\"" << element->getValue() << "\""<< parameters.str();
+                            string words = element->getValue();
+                            words = std::regex_replace(words, std::regex("\""), "\\\"");
+
+                            wordParameters << wordPrefix <<"\"" << words << "\""<< parameters.str();
                             
                             /// Take into account group positioning
                             float posy = xml2guidovisitor::getYposition(element, 0, true);
@@ -906,6 +910,7 @@ void xmlpart2guido::checkOctavaEnd() {
                         case k_rehearsal:
                         {
                             string rehearsalValue = element->getValue();
+                            rehearsalValue = std::regex_replace(rehearsalValue, std::regex("\""), "\\\"");
                             rehearsalValue = "\""+rehearsalValue+"\"";
                             
                             string enclosure = element->getAttributeValue("enclosure");
