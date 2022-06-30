@@ -236,6 +236,13 @@ namespace MusicXML2
             std::string autoHideTiedAccidentals = "set<autoHideTiedAccidentals=\"on\">";
             tag = guidotag::create(autoHideTiedAccidentals);
             add(tag);
+            
+            // Add  \set<resolveMultiVoiceCollisions="on">
+            if (fCurrentStaffIndex == 1) {
+                std::string resolveMultiVoiceCollisions = "set<resolveMultiVoiceCollisions=\"on\">";
+                tag = guidotag::create(resolveMultiVoiceCollisions);
+                add(tag);
+            }
                         
             /// Add staffFormat if needed
             // We do not infer default staff distance from musicXML since no software seem to be able to control it!

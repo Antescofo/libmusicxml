@@ -52,6 +52,7 @@ namespace MusicXML2
         fCurrentOctavaShift = 0;
         fShouldStopOctava = false;
         staffClefMap.clear();
+        fPreviousPedalYPos = 0.0;
     }
     
     //______________________________________________________________________________
@@ -75,6 +76,7 @@ namespace MusicXML2
         fCurrentScorePosition.set(0, 1);
         measurePositionMap.clear();
         timeSignatureMap.clear();
+        fPreviousPedalYPos = 0.0;
     }
     
     //______________________________________________________________________________
@@ -94,6 +96,7 @@ namespace MusicXML2
         fShouldStopOctava = false;
         start (seq);
         processedDirections.clear();
+        fPreviousPedalYPos = 0.0;
     }
     
     //________________________________________________________________________
@@ -641,6 +644,8 @@ void xmlpart2guido::checkOctavaEnd() {
                                 dx-=2; // to allow two tags
                                 if (fPreviousPedalYPos) {
                                     s << "dy=" << fPreviousPedalYPos << "hs, dx="<< dx<<"hs"; // dx was -2
+                                } else {
+                                    s << "dx="<< dx<<"hs"; // dx was -2
                                 }
                             }else {
                                 s << "dx="<<dx;
