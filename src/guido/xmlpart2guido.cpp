@@ -1272,8 +1272,10 @@ bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
              s << "autopos=\"on\"";
              tag->add (guidoparam::create(s.str(), false));*/
             
-        }else if (type == "crescendo")
-        {
+        }
+        
+        // if at openning, we should get dx2 for the ending (and spread for crescendo at its closing
+        if (type == "crescendo" || type == "diminuendo") {
             ctree<xmlelement>::iterator wedgeBegin= find(fCurrentPart->begin(), fCurrentPart->end(), elt);
             int crescendoNumber = elt->getAttributeIntValue("number", 1);   // default is 1 for wedge!
             ctree<xmlelement>::iterator nextevent  = wedgeBegin;
@@ -1307,7 +1309,7 @@ bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
                     nextevent++;
                 }
                 
-                //cerr<< "Measure:"<< fMeasNum <<" Wedge has "<< numberOfNotesInWedge<< " events!"<<endl;
+//                cerr<< "Measure:"<< fMeasNum <<" Wedge ends with "<< numberOfNotesInWedge<< " events!"<<endl;
                 
                 if (numberOfNotesInWedge > 1) {
                     /// fetch dx1 and dx2 value based on ending
@@ -1323,24 +1325,25 @@ bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
                     }
                     
                     /// !Important: the relative-x on the wedge end CAN NOT be directly translated to GMN as it refers to the x-position at the placement of the Wedge Stop. This should be handled by the GDevice in Guido instead.
-                    /*
-                     float posx2 = nextWedge->getAttributeFloatValue("relative-x", 0);
-                     if (posx2!=0.0) {
-                     posx2 = (posx2 / 10) * 2;   // convert to half spaces
-                     
-                     stringstream s;
-                     s << "dx2=" << posx2 << "hs";
-                     tag->add (guidoparam::create(s.str(), false));
-                     }*/
+                    float posx2 = nextWedge->getAttributeFloatValue("relative-x", 0);
+                    if (posx2!=0.0) {
+                        posx2 = (posx2 / 10) * 2;   // convert to half spaces
+                        
+                        stringstream s;
+                        s << "dx2=" << posx2 << "hs";
+                        tag->add (guidoparam::create(s.str(), false));
+                    }
                 }
                 
-                
                 //// Add spreadvalue from the Crescendo Ending
-                float spreadValue = nextWedge->getAttributeFloatValue("spread", 15.0);
-                if (spreadValue != 15.0) {
-                    stringstream s;
-                    s << "deltaY=" << (spreadValue/10)*2 << "hs";
-                    tag->add (guidoparam::create(s.str(), false));
+                if (type == "crescendo")
+                {
+                    float spreadValue = nextWedge->getAttributeFloatValue("spread", 15.0);
+                    if (spreadValue != 15.0) {
+                        stringstream s;
+                        s << "deltaY=" << (spreadValue/10)*2 << "hs";
+                        tag->add (guidoparam::create(s.str(), false));
+                    }
                 }
                 
                 // Add new AutoPos="on"
@@ -1358,7 +1361,7 @@ bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
                                                      fCurrentMeasure->getAttributeValue("number"),
                                                      0, staff, offset.toDouble());
         if (wedgeDx != -999 && wedgeDx != 0) {
-            s << ", dx=" << wedgeDx ;
+            s << ", dx1=" << wedgeDx ;
         }
         tag->add (guidoparam::create(s.str(), false));
 
