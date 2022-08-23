@@ -1351,19 +1351,20 @@ bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
                  s << "autopos=\"on\"";
                  tag->add (guidoparam::create(s.str(), false));*/
             }
+            
+            // add dy and dx1
+            stringstream s;
+            s << "dy=" << xml2guidovisitor::getYposition(elt, 13, true) << "hs";
+            
+            rational offset(fCurrentOffset, fCurrentDivision*4);
+            float wedgeDx = timePositions.getDxForElement(elt, fCurrentVoicePosition.toDouble(),
+                                                         fCurrentMeasure->getAttributeValue("number"),
+                                                         0, staff, offset.toDouble());
+            if (wedgeDx != -999 && wedgeDx != 0) {
+                s << ", dx1=" << wedgeDx ;
+            }
+            tag->add (guidoparam::create(s.str(), false));
         }
-        
-        stringstream s;
-        s << "dy=" << xml2guidovisitor::getYposition(elt, 13, true) << "hs";
-        
-        rational offset(fCurrentOffset, fCurrentDivision*4);
-        float wedgeDx = timePositions.getDxForElement(elt, fCurrentVoicePosition.toDouble(),
-                                                     fCurrentMeasure->getAttributeValue("number"),
-                                                     0, staff, offset.toDouble());
-        if (wedgeDx != -999 && wedgeDx != 0) {
-            s << ", dx1=" << wedgeDx ;
-        }
-        tag->add (guidoparam::create(s.str(), false));
 
         if (fCurrentOffset > 0) {
             addDelayed(tag, fCurrentOffset);
