@@ -3274,7 +3274,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
             if (thisClef.empty()) {
                 return 0;
             }
-            float noteHeadPos=nv.getNoteHeadDy(thisClef);
+            float noteHeadPos=nv.getNoteHeadDy(thisClef)+ float(-1 * fCurrentOctavaShift * 7);
             float restformatDy = noteHeadPos;
             // Rest default position in Guido (dy 0) is the middle line of the staff
             // in G-Clef, negative is up and positive is down AND -6 offset if counting from G-Clef C4 which is zero for notehead
