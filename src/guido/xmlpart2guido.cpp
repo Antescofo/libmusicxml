@@ -2137,6 +2137,9 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
             if (fInGrace && fBeamOpened) {
                 beamNumber = 2;
             }
+            if (fBeamGrouping) {
+                beamNumber = 2;
+            }
             tagName << "beamEnd" << ":"<<beamNumber;
             Sguidoelement tag = guidotag::create(tagName.str());
             add (tag);
@@ -2147,7 +2150,7 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
             // If there is a grouping, close it!
             if (fBeamGrouping) {
                 stringstream tagName2;
-                tagName2 << "beamEnd" << ":"<<beamNumber+1;
+                tagName2 << "beamEnd" << ":"<<beamNumber-1;
                 tag = guidotag::create(tagName2.str());
                 add (tag);
                 fBeamGrouping = false;
