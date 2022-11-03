@@ -158,8 +158,9 @@ public visitor<S_attributes>         // to get clef, division, staves, time and 
     void checkSlurBegin	 ( const std::vector<S_slur>& slurs );
     void checkSlurEnd	 ( const std::vector<S_slur>& slurs );
     bool isSlurClosing(S_slur elt);
-    void checkTiedBegin	 ( const std::vector<S_tied>& tied );
-    void checkTiedEnd	 ( const std::vector<S_tied>& tied );
+    bool isTieClosing(S_tied elt, const notevisitor& nv);
+    void checkTiedBegin	 ( const notevisitor& nv );
+    void checkTiedEnd	 ( const notevisitor& nv );
     void checkVoiceTime	 ( const rational& currTime, const rational& voiceTime);
     int  checkRestFormat	 ( const notevisitor& nv , rational posInMeasure);
     bool checkNoteFormat	 ( const notevisitor& nv , rational posInMeasure);

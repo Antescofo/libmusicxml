@@ -1820,11 +1820,16 @@ void xmlpart2guido::parseTime(ctree<xmlelement>::iterator &iter) {
     }
     
     //______________________________________________________________________________
-    void xmlpart2guido::checkTiedBegin ( const std::vector<S_tied>& tied )
+    void xmlpart2guido::checkTiedBegin ( const notevisitor& nv )
     {
+        auto tied = nv.getTied();
         std::vector<S_tied>::const_iterator i;
         for (i = tied.begin(); i != tied.end(); i++) {
             if ((*i)->getAttributeValue("type") == "start") {
+                if (!isTieClosing((*i), nv)) {
+                    cerr<<"Xml2Guido Warning: Tie opening but not closing until the next measure in "<<fMeasNum<<". Ignored!"<<endl;
+                    return;
+                }
                 /// MusicXML does not always contain the "number" attribtue! if not, we'll assign them ourselves!
                 stringstream tagName;
                 if (fTiedOpen.empty()) {
@@ -1835,7 +1840,7 @@ void xmlpart2guido::parseTime(ctree<xmlelement>::iterator &iter) {
                 string num = (*i)->getAttributeValue ("number");
                 if (num.size()) {
                     tagName << "tieBegin" << ":"<< num;
-                }else{
+                } else {
                     tagName << "tieBegin" << ":"<< fTiedOpen.back();
                 }
                 Sguidoelement tag = guidotag::create(tagName.str());
@@ -1849,12 +1854,13 @@ void xmlpart2guido::parseTime(ctree<xmlelement>::iterator &iter) {
         }
     }
     
-    void xmlpart2guido::checkTiedEnd ( const std::vector<S_tied>& tied )
+    void xmlpart2guido::checkTiedEnd ( const notevisitor& nv )
     {
         // Don't even bother if there is no priorly opened Tied
         if (fTiedOpen.empty()) {
             return;
         }
+        auto tied = nv.getTied();
         std::vector<S_tied>::const_iterator i;
         for (i = tied.begin(); i != tied.end(); i++) {
             if ((*i)->getAttributeValue("type") == "stop") {
@@ -1874,11 +1880,73 @@ void xmlpart2guido::parseTime(ctree<xmlelement>::iterator &iter) {
             }
         }
     }
+
+bool xmlpart2guido::isTieClosing(S_tied elt, const notevisitor& nv ) {
+    ctree<xmlelement>::iterator nextnote = find(fCurrentPart->begin(), fCurrentPart->end(), elt);
+    if (nextnote != fCurrentPart->end()) {
+        nextnote.forward_up();    // advance one step
+    }
+    
+    // Stop Conditions: (1) The first occurence of a slur STOP with the same NUMBER attribute should be considered as the target.
+    //  (2) If the measureNumber goes beyond current measure + 10 (this will greatly enhance speed!!). We can assume that slurs do not go beyond 10 measures in regular scores!
+    // Do not go beyond.
+    
+    int searchMeasureNum = fMeasNum;
+    
+    float tiedPitch = nv.getMidiPitch();
+    
+    while ((nextnote != fCurrentPart->end()) && (searchMeasureNum <= fMeasNum + 1)) {
+        // Check measure
+        if (nextnote->getType() == k_measure) {
+            std::string measNum = nextnote->getAttributeValue("number");
+            try {
+                searchMeasureNum = std::stoi(measNum);
+            } catch(...) {
+                searchMeasureNum++;
+            }
+            // Move to the first sub-element
+            nextnote.forward();
+        }
+        
+        // looking for the next note on the target voice
+        if ((nextnote->getType() == k_note)) {
+            notevisitor newNote;
+            xml_tree_browser browser(&newNote);
+            Sxmlelement note = *nextnote;
+            browser.browse(*note);
+            
+            int thisNoteVoice = nextnote->getIntValue(k_voice,0);
+            ctree<xmlelement>::iterator iter;
+            iter = nextnote->find(k_notations);
+            if (iter != nextnote->end())
+            {
+                ctree<xmlelement>::iterator iterTie;
+                iterTie = iter->find(k_tied);
+                while (iterTie != iter->end()) {
+                    if ((iterTie->getAttributeValue("type")=="stop") &&
+                        (newNote.getMidiPitch() == tiedPitch) ) {
+                        
+                        if (thisNoteVoice == fTargetVoice) {
+                            return true;
+                        }else {
+                            return false;   // we found the same slur numbering with "stop" on another voice!
+                        }
+                    }
+                    
+                    iterTie = iter->find(k_tied, iterTie++);
+                }
+            }
+        }
+        nextnote.forward_up();
+    }
+    
+    return false;
+}
     
     //______________________________________________________________________________
     void xmlpart2guido::checkSlurBegin ( const std::vector<S_slur>& slurs )
     {
-        /*
+        /**
          In Guido, slurBegin should be generated before notename and slurEnd after (or otherwise leading to bad numbering and rendering issues such as big slurs).
          Whereas in MusicXML, Slurs are attributes of Notations inside a note event.
          
@@ -3119,7 +3187,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
     void xmlpart2guido::newNote( const notevisitor& nv, rational posInMeasure, const std::vector<Sxmlelement>& fingerings)
     {
         // Check for Tied Begin
-        checkTiedBegin(nv.getTied());
+        checkTiedBegin(nv);
         
         bool printObject = nv.printObject();
 
@@ -3206,7 +3274,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
                 
         add (note);
         
-        checkTiedEnd(nv.getTied());
+        checkTiedEnd(nv);
 
         
         if (noteFormat)
