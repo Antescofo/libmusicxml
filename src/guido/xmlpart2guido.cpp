@@ -3265,7 +3265,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
         return noteFormat;
     }
     
-    int xmlpart2guido::checkRestFormat	 ( const notevisitor& nv )
+    int xmlpart2guido::checkRestFormat	 ( const notevisitor& nv, rational posInMeasure )
     {
         if (nv.getStep().size())
         {
@@ -3274,6 +3274,9 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
             if (thisClef.empty()) {
                 return 0;
             }
+            bool restFormat = false;
+            Sguidoelement restFormatTag = guidotag::create("restFormat");
+            
             float noteHeadPos=nv.getNoteHeadDy(thisClef)+ float(-1 * fCurrentOctavaShift * 7);
             float restformatDy = noteHeadPos;
             // Rest default position in Guido (dy 0) is the middle line of the staff
@@ -3290,12 +3293,29 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
                 restformatDy = restformatDy * -1.0;
             }
             
-            if (restformatDy!=0.0)
-            {
-                Sguidoelement restFormatTag = guidotag::create("restFormat");
+            float restDx = timePositions.getDxForElement(nv.getSnote(),
+                                                         posInMeasure.toDouble(),
+                                                         fCurrentMeasure->getAttributeValue("number"),
+                                                         nv.getVoice(),
+                                                         nv.getStaff(),
+                                                         0);
+            
+            // Do not infer default-x on incomplete measures, grace or Chords
+            if ( (restDx != -999 && restDx != 0) ) {
+                stringstream s;
+                s << "dx=" << restDx ;
+                restFormatTag->add (guidoparam::create(s.str(), false));
+                restFormat = true;
+            }
+            
+            if (restformatDy!=0.0) {
                 stringstream s;
                 s << "dy=" << restformatDy;
                 restFormatTag->add (guidoparam::create(s.str(), false));
+                restFormat = true;
+            }
+            
+            if (restFormat) {
                 push(restFormatTag);
                 return 1;
             }
@@ -3386,8 +3406,9 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
         
         pendingPops += checkTremolo(*this, elt);   // non-measured tremolos will be popped upon "stop" and not counted here
         
-        if (notevisitor::getType()==kRest)
-            pendingPops += checkRestFormat(*this);
+        if (notevisitor::getType()==kRest) {
+            pendingPops += checkRestFormat(*this, thisNoteHeadPosition);
+        }
                 
         deque<notevisitor> chord = getChord(elt);
         

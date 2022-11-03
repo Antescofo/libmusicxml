@@ -161,7 +161,7 @@ public visitor<S_attributes>         // to get clef, division, staves, time and 
     void checkTiedBegin	 ( const std::vector<S_tied>& tied );
     void checkTiedEnd	 ( const std::vector<S_tied>& tied );
     void checkVoiceTime	 ( const rational& currTime, const rational& voiceTime);
-    int  checkRestFormat	 ( const notevisitor& nv );
+    int  checkRestFormat	 ( const notevisitor& nv , rational posInMeasure);
     bool checkNoteFormat	 ( const notevisitor& nv , rational posInMeasure);
     void checkWavyTrillBegin	 ( const notevisitor& nv );
     void checkWavyTrillEnd	 ( const notevisitor& nv );

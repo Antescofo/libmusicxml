@@ -55,10 +55,10 @@ protected:
     /// Returns iterator in TimePositionList with equal voiceId and EQUAL position to query
     TimePositionList::iterator find(TimePositionList &timePos4measure, int voiceId, int staff, double position) {
 //        cerr<<"Start Search for Position "<<position<<" voiceId:"<<voiceId<<endl;
-        auto it = std::find_if(timePos4measure.begin(), timePos4measure.end(), [voiceId, staff, position] (const VoicedTimePosition& e) {
-            if ((voiceId > 0) && (std::get<2>(e) != voiceId) ) {
-                return false;
-            }
+        auto it = std::find_if(timePos4measure.begin(), timePos4measure.end(), [ staff, position] (const VoicedTimePosition& e) {
+//            if ((voiceId > 0) && (std::get<2>(e) != voiceId) ) {
+//                return false;
+//            }
             if ((staff > 0) && (std::get<3>(e) != staff) ) {
                 return false;
             }
