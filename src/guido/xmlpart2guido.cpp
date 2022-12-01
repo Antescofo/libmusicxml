@@ -148,8 +148,8 @@ namespace MusicXML2
             fInCue = false;
             
             // add EMPTY if durationInCue>0 and fCurrentMeasurePosition is not equal to fCurrentMeasureLength
-            durationInCue.rationalise();
             if (durationInCue.getNumerator() > 0) {
+                durationInCue.rationalise();
                 guidonoteduration dur (durationInCue.getNumerator(), durationInCue.getDenominator());
                 Sguidoelement note = guidonote::create(fTargetVoice, "empty", 0, dur, "");
                 add (note);
@@ -3003,8 +3003,8 @@ void xmlpart2guido::checkPostArticulation ( const notevisitor& note )
             fInCue = false;
             pop();
             
-            durationInCue.rationalise();
             if (durationInCue.getNumerator() > 0) {
+                durationInCue.rationalise();
                 guidonoteduration dur (durationInCue.getNumerator(), durationInCue.getDenominator());
                 Sguidoelement note = guidonote::create(fTargetVoice, "empty", 0, dur, "");
                 add (note);
