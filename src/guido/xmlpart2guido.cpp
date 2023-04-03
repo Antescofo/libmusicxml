@@ -34,12 +34,12 @@ namespace MusicXML2
 {
     
     //______________________________________________________________________________
-    xmlpart2guido::xmlpart2guido(bool generateComments, bool generateStem, bool generateBar, int startMeasure, int endMeasure, int endMeasureOffset) :
+    xmlpart2guido::xmlpart2guido(bool generateComments, bool generateStem, bool generateBar, int startMeasure, int endMeasure, int endMeasureOffset, double endMeasureBeatoffset) :
     fGenerateComments(generateComments), //fGenerateStem(generateStem),
     fGenerateBars(generateBar),
     fNotesOnly(false), fCurrentStaffIndex(0), fCurrentStaff(0),
     fTargetStaff(0), fTargetVoice(0),
-    fStartMeasure(startMeasure), fEndMeasure(endMeasure), fEndMeasureOffset(endMeasureOffset)
+    fStartMeasure(startMeasure), fEndMeasure(endMeasure), fEndMeasureOffset(endMeasureOffset), fEndMeasureBeatOffset(endMeasureBeatoffset)
     {
         fGeneratePositions = true;
         fGenerateAutoMeasureNum = true;
@@ -187,10 +187,27 @@ namespace MusicXML2
 bool xmlpart2guido::checkMeasureRange() {
     if (!fCurrentMeasure) return true;
     int currentXmlMeasure = atoi(fCurrentMeasure->getAttributeValue("number").c_str());
-    //cerr<<"\t <<< checkMeasureRange "<< currentXmlMeasure<< "|"<<fStartMeasure<<" "<<fEndMeasure<<endl;
+//    cerr<<"\t <<< checkMeasureRange "<< currentXmlMeasure<< "|"<<fEndMeasure<<"+"<<fEndMeasureBeatOffset
+//    <<" fCurrentVoicePosition="<<fCurrentVoicePosition.toDouble()
+//    <<endl;
     if ((currentXmlMeasure < fStartMeasure)) return false;
      
-    if ((fEndMeasure>0) && (currentXmlMeasure > fEndMeasure+fEndMeasureOffset)) return false;
+    //
+    if ((fEndMeasure>0)) {
+        if (fEndMeasureBeatOffset > 0.0) {
+            if (currentXmlMeasure > fEndMeasure+fEndMeasureOffset) {
+                return false;
+            } else if (currentXmlMeasure == fEndMeasure+fEndMeasureOffset) {
+                if (fCurrentVoicePosition.toDouble() >  fEndMeasureBeatOffset/4.0) {
+                    return false;
+                }
+            }
+            // Check voice position from the begining of measure!!!
+        } else
+        if (currentXmlMeasure > fEndMeasure+fEndMeasureOffset) {
+            return false;
+        }
+    }
     
     return true;
 }

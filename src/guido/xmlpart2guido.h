@@ -102,6 +102,9 @@ public visitor<S_attributes>         // to get clef, division, staves, time and 
     
     int     fStartMeasure, fEndMeasure, fEndMeasureOffset;          // Starting and Ending measures for Partial conversion. Default=0 meaning non-partial.
     
+    /// Beat offset from in fEndMeasure where the score should end. A 4/4 TS thus has 4.0 beats.
+    double fEndMeasureBeatOffset;
+    
     long	fCurrentDivision;		// the current measure division, expresses the time unit in division of the quarter note
     long	fCurrentOffset;			// the current direction offset: represents an element relative displacement in current division unit
     rational fCurrentMeasureLength;	// the current measure length (max of the current measure positions)
@@ -237,7 +240,7 @@ protected:
     void checkWedgeStop();
         
 public:
-    xmlpart2guido(bool generateComments, bool generateStem, bool generateBar = true, int startMeasure = 0, int endMeasure = 0, int endMeasureOffset = 0);
+    xmlpart2guido(bool generateComments, bool generateStem, bool generateBar = true, int startMeasure = 0, int endMeasure = 0, int endMeasureOffset = 0, double endMeasureBeatoffset = 0);
     virtual ~xmlpart2guido() {}
     
     Sguidoelement& current ()					{ return fStack.top(); }
