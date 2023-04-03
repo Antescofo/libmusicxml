@@ -359,7 +359,11 @@ void xmlpart2guido::checkOctavaEnd() {
 
             if (!fNotesOnly) {
                 if (lastMeter) {
-                    add(lastMeter);
+                    // Do not add lastMeter if this measure starts with a new meter!!!
+                    auto iter = elt->find(k_time);
+                    if ((iter == elt->end())) {
+                        add(lastMeter);
+                    }
                 }
                 if (lastKey) {
                     add(lastKey);
