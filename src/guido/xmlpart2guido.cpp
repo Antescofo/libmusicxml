@@ -3463,10 +3463,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         if (inChord()) return;					// chord notes have already been handled
         
         isProcessingChord = false;
-        
-        rational thisDuration(getDuration(), fCurrentDivision*4);
-        thisDuration.rationalise();
-        
+
         int pendingPops = 0;
         
         bool scanVoice = (notevisitor::getVoice() == fTargetVoice);
@@ -3475,9 +3472,17 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
                 checkDelayed (getDuration(), true);
             }
         }
-        if (!scanVoice) return;
+        if (!scanVoice) {
+            // We should love measureTime even if we return to generate Empty entities
+            moveMeasureTime (getDuration(), scanVoice);
+            return;
+        }
         
-        checkOctavaBegin(fCurrentVoicePosition + thisDuration);
+        rational thisDuration(getDuration(), fCurrentDivision*4);
+        rational eventStartPosition = fCurrentVoicePosition + thisDuration;
+        eventStartPosition.rationalise();
+        
+        checkOctavaBegin(eventStartPosition);
 
                         
         if ((fTremoloInProgress)&&(fTremolo && (fTremolo->getAttributeValue("type")=="stop"))) {
@@ -3492,7 +3497,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         checkStaff(notevisitor::getStaff());
         
         // Add Empty events if the "start" of this event is behind the measure position
-        checkVoiceTime (fCurrentMeasurePosition, fCurrentVoicePosition + thisDuration);
+        checkVoiceTime (fCurrentMeasurePosition, eventStartPosition);
         
         checkCue(*this);
         if (notevisitor::getType() != notevisitor::kRest)
