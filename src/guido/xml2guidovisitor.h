@@ -104,6 +104,8 @@ protected:
     int fPartsAvailable; // number of parts available in this XML
     
     int fBeginMeasure;      // Number of measure to begin parsing, used for partial conversion. (default = 0)
+    /// Beat offset from in fBeginMeasure where the score should end. A 4/4 TS thus has 4.0 beats.
+    double fBeginMeasureBeatOffset;
     int fEndMeasure;        // Measure Number where parsing ends, used for partial conversion. (default = 0 meaning go to the end)
     int fEndMeasureOffset;  // Ending the score conversion at this offset (but giving fEndMeasure for fEndPosition)
     /// Beat offset from in fEndMeasure where the score should end. A 4/4 TS thus has 4.0 beats.
@@ -132,7 +134,9 @@ protected:
     double fTotalDuration;
     
 public:
-    xml2guidovisitor(bool generateComments, bool generateStem, bool generateBar=true, int partNum = 0, int beginMeasure = 0, int endMeasure = 0, int endMeasureOffset = 0, double endMeasureBeatoffset = 0);
+    xml2guidovisitor(bool generateComments, bool generateStem, bool generateBar=true, int partNum = 0,
+                     int beginMeasure = 0, double beginMeasureOffset = 0.0,
+                     int endMeasure = 0, int endMeasureOffset = 0, double endMeasureBeatoffset = 0);
     virtual ~xml2guidovisitor() {}
     
     Sguidoelement convert (const Sxmlelement& xml);

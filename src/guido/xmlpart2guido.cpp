@@ -34,12 +34,15 @@ namespace MusicXML2
 {
     
     //______________________________________________________________________________
-    xmlpart2guido::xmlpart2guido(bool generateComments, bool generateStem, bool generateBar, int startMeasure, int endMeasure, int endMeasureOffset, double endMeasureBeatoffset) :
+    xmlpart2guido::xmlpart2guido(bool generateComments, bool generateStem, bool generateBar,
+                                 int startMeasure, double startMeasureBeatOffset,
+                                 int endMeasure, int endMeasureOffset, double endMeasureBeatoffset) :
     fGenerateComments(generateComments), //fGenerateStem(generateStem),
     fGenerateBars(generateBar),
     fNotesOnly(false), fCurrentStaffIndex(0), fCurrentStaff(0),
     fTargetStaff(0), fTargetVoice(0),
-    fStartMeasure(startMeasure), fEndMeasure(endMeasure), fEndMeasureOffset(endMeasureOffset), fEndMeasureBeatOffset(endMeasureBeatoffset)
+    fStartMeasure(startMeasure), fEndMeasure(endMeasure), fEndMeasureOffset(endMeasureOffset),
+    fEndMeasureBeatOffset(endMeasureBeatoffset), fBeginMeasureBeatOffset(startMeasureBeatOffset)
     {
         fGeneratePositions = true;
         fGenerateAutoMeasureNum = true;
@@ -53,6 +56,7 @@ namespace MusicXML2
         fShouldStopOctava = false;
         staffClefMap.clear();
         fPreviousPedalYPos = 0.0;
+        isFirstPartialMeasureDone = (fStartMeasure == 0) && (fBeginMeasureBeatOffset== 0.0);
     }
     
     //______________________________________________________________________________
@@ -187,10 +191,18 @@ namespace MusicXML2
 bool xmlpart2guido::checkMeasureRange() {
     if (!fCurrentMeasure) return true;
     int currentXmlMeasure = atoi(fCurrentMeasure->getAttributeValue("number").c_str());
-//    cerr<<"\t <<< checkMeasureRange "<< currentXmlMeasure<< "|"<<fEndMeasure<<"+"<<fEndMeasureBeatOffset
-//    <<" fCurrentVoicePosition="<<fCurrentVoicePosition.toDouble()
-//    <<endl;
-    if ((currentXmlMeasure < fStartMeasure)) return false;
+    
+    if (!isFirstPartialMeasureDone) {
+        if ((currentXmlMeasure < fStartMeasure)) {
+            return false;
+        } else if (currentXmlMeasure == fStartMeasure) {
+            if (fCurrentVoicePosition.toDouble() < fBeginMeasureBeatOffset/4.0) {
+                return false;
+            } else if (!isFirstPartialMeasureDone && (fCurrentVoicePosition.toDouble() >= fBeginMeasureBeatOffset/4.0)) {
+                makeFirstPartialMeasure();
+            }
+        }
+    }
      
     //
     if ((fEndMeasure>0)) {
@@ -198,18 +210,57 @@ bool xmlpart2guido::checkMeasureRange() {
             if (currentXmlMeasure > fEndMeasure+fEndMeasureOffset) {
                 return false;
             } else if (currentXmlMeasure == fEndMeasure+fEndMeasureOffset) {
-                if (fCurrentVoicePosition.toDouble() >  fEndMeasureBeatOffset/4.0) {
+                if (fCurrentVoicePosition.toDouble() >= fEndMeasureBeatOffset/4.0) {
                     return false;
+                } else if (fEndPosition.toDouble() == 0) {
+                    fEndPosition = fCurrentScorePosition;
                 }
             }
-            // Check voice position from the begining of measure!!!
+            
         } else
         if (currentXmlMeasure > fEndMeasure+fEndMeasureOffset) {
             return false;
+        } else if (fEndPosition.toDouble() == 0) {
+            fEndPosition = fCurrentScorePosition;
         }
     }
     
+    // DEBUG
+//    cerr<<"\t <<< checkMeasureRange "<< currentXmlMeasure<< "|"
+//    <<fStartMeasure<<"+"<<fBeginMeasureBeatOffset/4.0<<"->"
+//    <<fEndMeasure+fEndMeasureOffset<<"+"<<fEndMeasureBeatOffset/4.0
+//    <<" fCurrentVoicePosition="<<fCurrentVoicePosition.toDouble()
+//    <<" isFirstPartialMeasureDone?"<<isFirstPartialMeasureDone<<" ";
+//    if (elt) {
+//        elt->print(cerr);
+//    }
+//    cerr<<endl;
+    //END-DEBUG
+    
     return true;
+}
+
+void xmlpart2guido::makeFirstPartialMeasure() {
+    if ( !isFirstPartialMeasureDone ) {
+        fStartPosition = fCurrentScorePosition + fCurrentVoicePosition;
+        isFirstPartialMeasureDone = true; // Do this first so `add` works!!!
+        if (!fNotesOnly) {
+            if (lastMeter) {
+                add(lastMeter);
+            }
+            if (lastKey) {
+                add(lastKey);
+            }
+                
+            // Add last clef
+            std::string lastClef = getClef(fTargetStaff , fCurrentVoicePosition, fMeasNum);
+            if (!lastClef.empty()) {
+                Sguidoelement tag = guidotag::create("clef");
+                tag->add (guidoparam::create(lastClef));
+                add(tag);
+            }
+        }
+    }
 }
     
     //______________________________________________________________________________
@@ -227,14 +278,14 @@ bool xmlpart2guido::checkMeasureRange() {
         }
     }
 
-void xmlpart2guido::checkOctavaBegin() {
+void xmlpart2guido::checkOctavaBegin(rational position) {
     // Generate Octave-shifts on current measure and current time
     std::string currMeasure = fCurrentMeasure->getAttributeValue("number");
 
     if (octavas.count(currMeasure)) {
         for (auto o = octavas[currMeasure].cbegin(); o != octavas[currMeasure].cend(); ) {
             // o.second points to pair< time, type >
-            if ( o->first < fCurrentVoicePosition && o->second != 0) {
+            if ( o->first < position && o->second != 0) {
                 parseOctaveShift(o->second);
                 octavas[currMeasure].erase(o++);
             }else {
@@ -277,7 +328,7 @@ void xmlpart2guido::checkOctavaEnd() {
             if (fCurrentOctavaShift) {
                 checkOctavaEnd();
             }else
-                checkOctavaBegin();
+                checkOctavaBegin(currTime);
         }
         // difference can be negative due to S_backup and it is normal!
     }
@@ -314,7 +365,7 @@ void xmlpart2guido::checkOctavaEnd() {
             if (fCurrentOctavaShift) {
                 checkOctavaEnd();
             }else
-                checkOctavaBegin();
+                checkOctavaBegin(fCurrentVoicePosition);
         }
     }
     
@@ -352,32 +403,9 @@ void xmlpart2guido::checkOctavaEnd() {
         
         measurePositionMap[fCurrentScorePosition.toDouble()] = fMeasNum ;
         
-        bool isFirstPartialMeasure = (fStartMeasure>0) && (fMeasNum == fStartMeasure);
-        
-        if ( isFirstPartialMeasure ) {
-            fStartPosition = fCurrentScorePosition;
-
-            if (!fNotesOnly) {
-                if (lastMeter) {
-                    // Do not add lastMeter if this measure starts with a new meter!!!
-                    auto iter = elt->find(k_time);
-                    if ((iter == elt->end())) {
-                        add(lastMeter);
-                    }
-                }
-                if (lastKey) {
-                    add(lastKey);
-                }
-                    
-                // Add last clef
-                std::string lastClef = getClef(fTargetStaff , fCurrentVoicePosition, fMeasNum);
-                if (!lastClef.empty()) {
-                    Sguidoelement tag = guidotag::create("clef");
-                    tag->add (guidoparam::create(lastClef));
-                    add(tag);
-                }
-            }
-        }
+        fCurrentMeasureLength.set  (0, 1);
+        fCurrentMeasurePosition.set(0, 1);
+        fCurrentVoicePosition.set  (0, 1);
 
         const string& implicit = elt->getAttributeValue ("implicit");
         if (implicit == "yes") fPendingBar = false;
@@ -401,8 +429,7 @@ void xmlpart2guido::checkOctavaEnd() {
                     tag->add(guidoparam::create(parameters.str(), false));
                 }
                 
-                if (!isFirstPartialMeasure)
-                    add (tag);
+                add (tag);
             }
         }else if (fCurrentScorePosition.toFloat() != 0.0) {
             // Create a HIDDEN Bar in case of fPendingBar equal to false.
@@ -420,9 +447,6 @@ void xmlpart2guido::checkOctavaEnd() {
             }
         }
 
-        fCurrentMeasureLength.set  (0, 1);
-        fCurrentMeasurePosition.set(0, 1);
-        fCurrentVoicePosition.set  (0, 1);
         fInhibitNextBar = false; // fNotesOnly;
         fPendingBar = false;
         fDoubleBar = false;
@@ -467,13 +491,6 @@ void xmlpart2guido::checkOctavaEnd() {
             }
             
             sLayout = elt->find(k_staff_layout, sLayout++);
-        }
-        
-        /// Report ending position for partial parsing
-        if ((fEndMeasure>0)) {
-            if (fMeasNum == fEndMeasure+1) {
-                fEndPosition = fCurrentScorePosition;
-            }
         }
     }
     
@@ -3195,17 +3212,17 @@ void xmlpart2guido::checkPostArticulation ( const notevisitor& note )
         return dur;
     }
     
-void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasure) {
+void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
     // Generate notes with correct fingering
     std::vector<Sxmlelement> emptyFingerings;
     for ( int index = 0; index < nvs.size(); index++) {
         checkStaff(nvs.at(index).getStaff());
-        newNote(nvs.at(index), posInMeasure, nvs.at(index).getFingerings());
+        newNote(nvs.at(index), nvs.at(index).getFingerings());
     }
 }
 
     //______________________________________________________________________________
-    void xmlpart2guido::newNote( const notevisitor& nv, rational posInMeasure, const std::vector<Sxmlelement>& fingerings)
+    void xmlpart2guido::newNote( const notevisitor& nv, const std::vector<Sxmlelement>& fingerings)
     {
         // Check for Tied Begin
         checkTiedBegin(nv);
@@ -3291,7 +3308,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
         /// Add Note head of X offset for note if necessary
         bool noteFormat = false;
         if (nv.getType() != kRest)
-            noteFormat = checkNoteFormat(nv, posInMeasure);
+            noteFormat = checkNoteFormat(nv, fCurrentVoicePosition);
                 
         add (note);
         
@@ -3447,20 +3464,20 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
         
         isProcessingChord = false;
         
-        rational thisNoteHeadPosition = fCurrentVoicePosition;
+        rational thisDuration(getDuration(), fCurrentDivision*4);
+        thisDuration.rationalise();
         
         int pendingPops = 0;
         
         bool scanVoice = (notevisitor::getVoice() == fTargetVoice);
         if (!isGrace() ) {
-            moveMeasureTime (getDuration(), scanVoice);
             if (scanVoice) {
                 checkDelayed (getDuration(), true);
             }
         }
         if (!scanVoice) return;
         
-        checkOctavaBegin();
+        checkOctavaBegin(fCurrentVoicePosition + thisDuration);
 
                         
         if ((fTremoloInProgress)&&(fTremolo && (fTremolo->getAttributeValue("type")=="stop"))) {
@@ -3474,7 +3491,8 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
         
         checkStaff(notevisitor::getStaff());
         
-        checkVoiceTime (fCurrentMeasurePosition, fCurrentVoicePosition);
+        // Add Empty events if the "start" of this event is behind the measure position
+        checkVoiceTime (fCurrentMeasurePosition, fCurrentVoicePosition + thisDuration);
         
         checkCue(*this);
         if (notevisitor::getType() != notevisitor::kRest)
@@ -3496,7 +3514,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
         pendingPops += checkTremolo(*this, elt);   // non-measured tremolos will be popped upon "stop" and not counted here
         
         if (notevisitor::getType()==kRest) {
-            pendingPops += checkRestFormat(*this, thisNoteHeadPosition);
+            pendingPops += checkRestFormat(*this, fCurrentVoicePosition);
         }
                 
         deque<notevisitor> chord = getChord(elt);
@@ -3511,9 +3529,14 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs, rational posInMeasur
             // Add current note to the beginning of the Chord vector to separate processing of notes and chords
             chord.push_front(*this);
             
-            newChord(chord, thisNoteHeadPosition);
+            newChord(chord);
         }else {
-            newNote (*this, thisNoteHeadPosition, this->getFingerings());
+            newNote (*this, this->getFingerings());
+        }
+        
+        // Move measureTime after adding note/chord
+        if (!isGrace() ) {
+            moveMeasureTime (getDuration(), scanVoice);
         }
         
         if (fShouldStopOctava) {

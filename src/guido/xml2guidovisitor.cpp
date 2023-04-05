@@ -33,11 +33,13 @@ namespace MusicXML2
     int xml2guidovisitor::defaultStaffDistance = 0;
     
     //______________________________________________________________________________
-    xml2guidovisitor::xml2guidovisitor(bool generateComments, bool generateStem, bool generateBar, int partNum, int beginMeasure, int endMeasure, int endMeasureOffset, double endMeasureBeatOffset) :
+    xml2guidovisitor::xml2guidovisitor(bool generateComments, bool generateStem, bool generateBar, int partNum,
+                                       int beginMeasure, double beginMeasureOffset,
+                                       int endMeasure, int endMeasureOffset, double endMeasureBeatOffset) :
     fGenerateComments(generateComments), fGenerateStem(generateStem),
     fGenerateBars(generateBar), fGeneratePositions(true),
     fCurrentStaffIndex(0), previousStaffHasLyrics(false), fCurrentAccoladeIndex(0), fPartNum(partNum),
-    fBeginMeasure(beginMeasure),
+    fBeginMeasure(beginMeasure), fBeginMeasureBeatOffset(beginMeasureOffset),
     fEndMeasure(endMeasure), fEndMeasureOffset(endMeasureOffset), fEndMeasureBeatOffset(endMeasureBeatOffset),
     fTotalMeasures(0), fTotalDuration(0.0)
     {
@@ -300,7 +302,9 @@ namespace MusicXML2
                         
             //// Browse XML and convert
             //cerr<<"<<< Browse staff "<<targetStaff<<" voice:"<< targetVoice<<endl;
-            xmlpart2guido pv(fGenerateComments, fGenerateStem, fGenerateBars, fBeginMeasure, fEndMeasure, fEndMeasureOffset, fEndMeasureBeatOffset);
+            xmlpart2guido pv(fGenerateComments, fGenerateStem, fGenerateBars,
+                             fBeginMeasure, fBeginMeasureBeatOffset,
+                             fEndMeasure, fEndMeasureOffset, fEndMeasureBeatOffset);
             pv.generatePositions (fGeneratePositions);
             xml_tree_browser browser(&pv);
             pv.initialize(seq, targetStaff, fCurrentStaffIndex, targetVoice, notesOnly, currentTimeSign);

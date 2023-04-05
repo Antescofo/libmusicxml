@@ -105,6 +105,9 @@ public visitor<S_attributes>         // to get clef, division, staves, time and 
     /// Beat offset from in fEndMeasure where the score should end. A 4/4 TS thus has 4.0 beats.
     double fEndMeasureBeatOffset;
     
+    /// Beat offset from in fBeginMeasure where the score should end. A 4/4 TS thus has 4.0 beats.
+    double fBeginMeasureBeatOffset;
+    
     long	fCurrentDivision;		// the current measure division, expresses the time unit in division of the quarter note
     long	fCurrentOffset;			// the current direction offset: represents an element relative displacement in current division unit
     rational fCurrentMeasureLength;	// the current measure length (max of the current measure positions)
@@ -170,8 +173,8 @@ public visitor<S_attributes>         // to get clef, division, staves, time and 
     void checkWavyTrillBegin	 ( const notevisitor& nv );
     void checkWavyTrillEnd	 ( const notevisitor& nv );
     void checkTextEnd();
-    void newNote		 ( const notevisitor& nv, rational posInMeasure, const std::vector<Sxmlelement>& fingerings);
-    void newChord   (const deque<notevisitor>& nvs, rational posInMeasure);
+    void newNote		 ( const notevisitor& nv, const std::vector<Sxmlelement>& fingerings);
+    void newChord   (const deque<notevisitor>& nvs);
     
     int checkTremolo(const notevisitor& note, const S_note& elt);
     
@@ -238,9 +241,15 @@ protected:
     
     Sguidoelement wedgeStopTag;
     void checkWedgeStop();
+    
+    bool isFirstPartialMeasureDone;
+    
+    void makeFirstPartialMeasure();
         
 public:
-    xmlpart2guido(bool generateComments, bool generateStem, bool generateBar = true, int startMeasure = 0, int endMeasure = 0, int endMeasureOffset = 0, double endMeasureBeatoffset = 0);
+    xmlpart2guido(bool generateComments, bool generateStem, bool generateBar = true,
+                  int startMeasure = 0, double startMeasureBeatOffset = 0.0,
+                  int endMeasure = 0, int endMeasureOffset = 0, double endMeasureBeatoffset = 0);
     virtual ~xmlpart2guido() {}
     
     Sguidoelement& current ()					{ return fStack.top(); }
@@ -292,7 +301,7 @@ private:
     void parseTime(ctree<xmlelement>::iterator &iter);
     void parseKey(ctree<xmlelement>::iterator &iter);
     
-    void checkOctavaBegin();
+    void checkOctavaBegin(rational position);
     void checkOctavaEnd();
     
     Sguidoelement lastKey;  // Storage used for Partial Conversions
