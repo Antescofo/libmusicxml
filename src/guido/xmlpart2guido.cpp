@@ -245,8 +245,11 @@ void xmlpart2guido::makeFirstPartialMeasure() {
         fStartPosition = fCurrentScorePosition + fCurrentVoicePosition;
         isFirstPartialMeasureDone = true; // Do this first so `add` works!!!
         if (!fNotesOnly) {
-            if (lastMeter) {
-                add(lastMeter);
+            // Do not add meter if start beat offset is zero and measure contains a meter
+            if ((fCurrentMeasure->find(k_time) == fCurrentMeasure->end())) {
+                if (lastMeter) {
+                    add(lastMeter);
+                }
             }
             if (lastKey) {
                 add(lastKey);
@@ -502,7 +505,10 @@ void xmlpart2guido::checkOctavaEnd() {
         checkVoiceTime (fCurrentMeasureLength, fCurrentVoicePosition);
         
         if (!fInhibitNextBar) {
-            if (fGenerateBars) fPendingBar = true;
+            if (fGenerateBars ) {
+                if (isFirstPartialMeasureDone)
+                    fPendingBar = true;
+            }
             else if (!fMeasureEmpty) {
                 if (fCurrentVoicePosition < fCurrentMeasureLength)
                     fPendingBar = true;
@@ -517,7 +523,6 @@ void xmlpart2guido::checkOctavaEnd() {
                 fPendingBar = false;
             else if (barStyle->getValue() == "light-light")
                 fDoubleBar = true;
-            
         }
     }
     
