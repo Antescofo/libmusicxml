@@ -64,15 +64,17 @@ void partsummary::visitEnd ( S_note& elt)
 {
 	notevisitor::visitEnd (elt);
     if (inChord()) return;
-    if (!isGrace() ) {
+    if (!isGrace() && (getType() != kRest) ) {
         std::string fCurrentMeasureNumber = fCurrentMeasure->getAttributeValue("number");
         
         timePositions.addTimePosition(fCurrentMeasureNumber,
                                       getMeasureTime(getVoice()).toDouble(),
                                       *this);
+    }
+    if (!isGrace()) {
         moveMeasureTime (getDuration(), getVoice());
     }
-	fStaves[notevisitor::getStaff()]++;
+    fStaves[notevisitor::getStaff()]++;
 	fVoices[notevisitor::getVoice()]++;
 	fStaffVoices[notevisitor::getStaff()][notevisitor::getVoice()]++;
 }
