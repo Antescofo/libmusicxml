@@ -101,6 +101,8 @@ namespace MusicXML2
         start (seq);
         processedDirections.clear();
         fPreviousPedalYPos = 0.0;
+        fEndPosition.set(0, 1);
+        fStartPosition.set(0, 1);
     }
     
     //________________________________________________________________________
@@ -220,7 +222,7 @@ bool xmlpart2guido::checkMeasureRange() {
         } else
         if (currentXmlMeasure > fEndMeasure+fEndMeasureOffset) {
             return false;
-        } else if (fEndPosition.toDouble() == 0) {
+        } else {
             fEndPosition = fCurrentScorePosition;
         }
     }
