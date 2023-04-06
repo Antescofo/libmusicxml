@@ -2602,30 +2602,52 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
     
     
     //______________________________________________________________________________
-    void xmlpart2guido::checkStem ( const S_stem& stem )
+    void xmlpart2guido::checkStem ( const S_stem& stem, const S_note& elt )
     {
         // Should regenerate if in a Cue tag
         Sguidoelement tag;
         if (stem) {
             if (stem->getValue() == "down") {
                 if (fCurrentStemDirection != kStemDown || fInCue) {
-                tag = guidotag::create("stemsDown");
-                fCurrentStemDirection = kStemDown;
+                    tag = guidotag::create("stemsDown");
+                    fCurrentStemDirection = kStemDown;
                 }
             }
             else if (stem->getValue() == "up") {
                 if (fCurrentStemDirection != kStemUp || fInCue) {
-                tag = guidotag::create("stemsUp");
-                fCurrentStemDirection = kStemUp;
+                    tag = guidotag::create("stemsUp");
+                    fCurrentStemDirection = kStemUp;
                 }
             }
             else if (stem->getValue() == "none") {
                 if (fCurrentStemDirection != kStemNone || fInCue) {
-                tag = guidotag::create("stemsOff");
-                fCurrentStemDirection = kStemNone;
+                    tag = guidotag::create("stemsOff");
+                    fCurrentStemDirection = kStemNone;
                 }
             }
             else if (stem->getValue() == "double") {
+                // We should check ahead if this note is Beamed. Otherwise the renderer can break!
+                if (!notevisitor::getBeam().empty()) {
+                    ctree<xmlelement>::iterator nextnote = find(fCurrentMeasure->begin(), fCurrentMeasure->end(), elt);
+                    nextnote.forward_up(); // forward one element
+                    while (nextnote != fCurrentMeasure->end()) {
+                        if (( (nextnote->getType() == k_note) && (nextnote->getIntValue(k_voice,0) == fTargetVoice) )) {
+                            // Check if there is stem
+                            if (nextnote->hasSubElement(k_stem)) {
+                                if (nextnote->getValue(k_stem) == "up") {
+                                    tag = guidotag::create("stemsUp");
+                                    fCurrentStemDirection = kStemUp;
+                                    break;
+                                } else if (nextnote->getValue(k_stem) == "down") {
+                                    tag = guidotag::create("stemsDown");
+                                    fCurrentStemDirection = kStemDown;
+                                    break;
+                                }
+                            }
+                        }
+                        nextnote.forward_up();
+                    }
+                }
             }
         }
         else if (fCurrentStemDirection != kStemUndefined) {
@@ -3506,7 +3528,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         
         checkCue(*this);
         if (notevisitor::getType() != notevisitor::kRest)
-            checkStem (notevisitor::fStem);
+            checkStem (notevisitor::fStem, elt);
         
         checkGrace(*this);
         checkSlurBegin (notevisitor::getSlur());

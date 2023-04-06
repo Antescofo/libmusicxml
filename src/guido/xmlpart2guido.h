@@ -149,7 +149,7 @@ public visitor<S_attributes>         // to get clef, division, staves, time and 
     deque<notevisitor>  getChord ( const S_note& note );    // build a chord vector
     std::vector<Sxmlelement>  getChord ( const Sxmlelement& note );	// build a chord vector
     void checkStaff		 (int staff );					// check for staff change
-    void checkStem		 ( const S_stem& stem );
+    void checkStem		 ( const S_stem& stem, const S_note& elt );
     void checkBeamBegin	 ( const std::vector<S_beam>& beams, const S_note& elt );
     void checkBeamEnd	 ( const std::vector<S_beam>& beams );
     void checkTupletBegin( const std::vector<S_tuplet>& tuplets,

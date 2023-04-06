@@ -110,7 +110,7 @@ EXP xmlErr      musicxmlstring2guido(const char *buff, bool generateBars, std::o
  
  Courtesy of Antescofo
  
- \param buff a string containing MusicXML code
+ \param buffer a string containing MusicXML code
  \param generateBars a boolean to force barlines generation
  \param partFilter 0 for all parts. Part number only otherwise (default:0).
  \param out the output stream
@@ -123,11 +123,11 @@ EXP xmlErr      musicxmlstring2guidoOnPart(const char * buffer, bool generateBar
  
  Courtesy of Antescofo
  
- \param buff a string containing MusicXML code
+ \param buffer a string containing MusicXML code
  \param generateBars a boolean to force barlines generation
  \param partFilter 0 for all parts. Part number only otherwise.
  \param beginMeasure Beginning measure number
- \param endMeausre Ending measure number
+ \param endMeasure Ending measure number
  \param out the output stream
  \return an error code (\c kNoErr when success)
  */
