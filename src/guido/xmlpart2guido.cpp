@@ -220,10 +220,11 @@ bool xmlpart2guido::checkMeasureRange() {
             }
             
         } else
-        if (currentXmlMeasure > fEndMeasure+fEndMeasureOffset) {
+        if (currentXmlMeasure >= fEndMeasure+fEndMeasureOffset) {
+            if ((currentXmlMeasure == fEndMeasure+fEndMeasureOffset)&&(fCurrentVoicePosition.toDouble() == 0.0)) {
+                fEndPosition = fCurrentScorePosition;
+            }
             return false;
-        } else {
-            fEndPosition = fCurrentScorePosition;
         }
     }
     
@@ -2004,7 +2005,6 @@ bool xmlpart2guido::isTieClosing(S_tied elt, const notevisitor& nv ) {
          This leads to the conclusion that the numbering in Guido and XML can NOT be the same. So we should track them indefinitely!
          */
         std::vector<S_slur>::const_iterator i;
-        int counter = 0;
         for (i = slurs.begin(); i != slurs.end(); i++) {
             if ((*i)->getAttributeValue("type") == "start") {
                 // There is a Slur Begin. Creat BeamBegin tag, and add its number to Stack
@@ -2017,7 +2017,6 @@ bool xmlpart2guido::isTieClosing(S_tied elt, const notevisitor& nv ) {
                 // Skip Slur creation, if the CLOSING Slur is not on the same voice/staff (Guido limitation)
                 if (isSlurClosing(*i)==false) {
                     //cerr<< "XML Slur at line:"<< (*i)->getInputLineNumber()<<" measure:"<<fMeasNum << " not closing on same voice! Skipping!"<<endl;
-                    counter++;
                     continue;
                 }
                 
@@ -2037,7 +2036,6 @@ bool xmlpart2guido::isTieClosing(S_tied elt, const notevisitor& nv ) {
                 std::pair<int,int> toto2(lastSlurInternalNumber, (*i)->getAttributeIntValue("number", 0));
                 fSlurStack.push_back(toto2);
             }
-            counter++;
         }
     }
 
