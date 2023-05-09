@@ -579,7 +579,7 @@ void xmlpart2guido::checkOctavaEnd() {
         }
         
         int directionStaff = 0;
-        if (elt->find(k_staff) != elt->end()) {
+        if ((elt->find(k_staff) != elt->end())&&(!fInGrace)) {
             checkStaff(elt->getIntValue(k_staff, 1));
             directionStaff = elt->getIntValue(k_staff, 0);
         }
@@ -3251,6 +3251,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
     //______________________________________________________________________________
     void xmlpart2guido::newNote( const notevisitor& nv, const std::vector<Sxmlelement>& fingerings)
     {
+        checkStaff(notevisitor::getStaff());
         // Check for Tied Begin
         checkTiedBegin(nv);
         
@@ -3381,8 +3382,8 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
                                                      nv.getVoice(),
                                                      nv.getStaff(),
                                                      0);
-        // Do not infer default-x on incomplete measures, grace or Chords
-        if ( (noteDx != -999 && noteDx != 0) && !fPendingBar && !isProcessingChord && !isGrace() )
+        // Do not infer default-x on incomplete measures, and grace
+        if ( (noteDx != -999 && noteDx != 0) && !fPendingBar  && !isGrace() )
         {
             stringstream s;
             s << "dx=" << noteDx ;

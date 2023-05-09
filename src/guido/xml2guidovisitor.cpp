@@ -241,11 +241,12 @@ namespace MusicXML2
             add(tag);
             
             // Add  \set<resolveMultiVoiceCollisions="on">
-            if (fCurrentStaffIndex == 1) {
-                std::string resolveMultiVoiceCollisions = "set<resolveMultiVoiceCollisions=\"on\">";
-                tag = guidotag::create(resolveMultiVoiceCollisions);
-                add(tag);
-            }
+            // NOTE: resolveMultiVoiceCollisions will lead to bad beaming in multi-voice scores!
+//            if (fCurrentStaffIndex == 1) {
+//                std::string resolveMultiVoiceCollisions = "set<resolveMultiVoiceCollisions=\"on\">";
+//                tag = guidotag::create(resolveMultiVoiceCollisions);
+//                add(tag);
+//            }
                         
             /// Add staffFormat if needed
             // We do not infer default staff distance from musicXML since no software seem to be able to control it!
