@@ -3527,6 +3527,8 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
             checkTupletEnd(notevisitor::getTuplet());
             checkSlurEnd (notevisitor::getSlur());
             checkBeamEnd (notevisitor::getBeam());
+            checkOctavaEnd();
+            checkWedgeStop();
             return;
         }
         
