@@ -57,6 +57,7 @@ namespace MusicXML2
         staffClefMap.clear();
         fPreviousPedalYPos = 0.0;
         isFirstPartialMeasureDone = (fStartMeasure == 0) && (fBeginMeasureBeatOffset== 0.0);
+        fMeasureHasTremolo = false;
     }
     
     //______________________________________________________________________________
@@ -81,6 +82,7 @@ namespace MusicXML2
         measurePositionMap.clear();
         timeSignatureMap.clear();
         fPreviousPedalYPos = 0.0;
+        fMeasureHasTremolo = false;
     }
     
     //______________________________________________________________________________
@@ -103,6 +105,7 @@ namespace MusicXML2
         fPreviousPedalYPos = 0.0;
         fEndPosition.set(0, 1);
         fStartPosition.set(0, 1);
+        fMeasureHasTremolo = false;
     }
     
     //________________________________________________________________________
@@ -396,6 +399,7 @@ void xmlpart2guido::checkOctavaEnd() {
     //______________________________________________________________________________
     void xmlpart2guido::visitStart ( S_measure& elt )
     {
+        fMeasureHasTremolo = false;
         fCurrentMeasure = elt;
         fCurrentScorePosition += fCurrentMeasureLength;
         fCurrentScorePosition.rationalise();
@@ -2929,6 +2933,7 @@ void xmlpart2guido::checkPostArticulation ( const notevisitor& note )
                 return 1;
             }else
                 if (tremType == "start") {
+                    fMeasureHasTremolo = true;
                     fTremoloInProgress = true;
                     tag = guidotag::create("trem");
                     
@@ -3383,7 +3388,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
                                                      nv.getStaff(),
                                                      0);
         // Do not infer default-x on incomplete measures, and grace
-        if ( (noteDx != -999 && noteDx != 0) && !fPendingBar  && !isGrace() )
+        if ( (noteDx != -999 && noteDx != 0) && !fPendingBar  && !isGrace() && !fMeasureHasTremolo )
         {
             stringstream s;
             s << "dx=" << noteDx ;
@@ -3435,7 +3440,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
                                                          0);
             
             // Do not infer default-x on incomplete measures, grace or Chords
-            if ( (restDx != -999 && restDx != 0) ) {
+            if ( (restDx != -999 && restDx != 0) && !fMeasureHasTremolo ) {
                 stringstream s;
                 s << "dx=" << restDx ;
                 restFormatTag->add (guidoparam::create(s.str(), false));
@@ -3516,6 +3521,9 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         if ((fTremoloInProgress)&&(fTremolo && (fTremolo->getAttributeValue("type")=="stop"))) {
             fTremoloInProgress = false;
             pop();
+            if (!isGrace() ) {
+                moveMeasureTime (getDuration(), scanVoice);
+            }
             checkTupletEnd(notevisitor::getTuplet());
             checkSlurEnd (notevisitor::getSlur());
             checkBeamEnd (notevisitor::getBeam());

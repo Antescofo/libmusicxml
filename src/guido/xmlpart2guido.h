@@ -282,7 +282,7 @@ public:
     std::map<std::string, std::map<rational, int>> octavas;
 
 private:
-    bool fHasLyrics;
+    bool fHasLyrics, fMeasureHasTremolo;
 
     std::string getClef(int staffIndex, rational pos, int measureNum);
     
