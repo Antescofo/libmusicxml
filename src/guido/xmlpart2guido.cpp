@@ -3245,12 +3245,21 @@ void xmlpart2guido::checkPostArticulation ( const notevisitor& note )
     }
     
 void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
+    int pendingPops = 0;
+    // Add chord group noteFormat if appropriate:
+    // Later: maybe we should do this only for chords whose elements have the same "default-x"?!
+    if (checkNoteFormat(nvs.at(0), fCurrentVoicePosition)) {
+        pendingPops++;
+    }
+    Sguidoelement chordtag = guidochord::create();
+    push (chordtag);
+    pendingPops++;
     // Generate notes with correct fingering
-    std::vector<Sxmlelement> emptyFingerings;
     for ( int index = 0; index < nvs.size(); index++) {
         checkStaff(nvs.at(index).getStaff());
         newNote(nvs.at(index), nvs.at(index).getFingerings());
     }
+    while (pendingPops--) pop();
 }
 
     //______________________________________________________________________________
@@ -3340,7 +3349,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         
         /// Add Note head of X offset for note if necessary
         bool noteFormat = false;
-        if (nv.getType() != kRest)
+        if ((nv.getType() != kRest) && (!isProcessingChord))
             noteFormat = checkNoteFormat(nv, fCurrentVoicePosition);
                 
         add (note);
@@ -3565,13 +3574,9 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         // Add chord or note with proper preprocessing
         if (chord.size())
         {
-            Sguidoelement chordtag = guidochord::create();
-            push (chordtag);
-            pendingPops++;
             isProcessingChord = true;
             // Add current note to the beginning of the Chord vector to separate processing of notes and chords
             chord.push_front(*this);
-            
             newChord(chord);
         }else {
             newNote (*this, this->getFingerings());
