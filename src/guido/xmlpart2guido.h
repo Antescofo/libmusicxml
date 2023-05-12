@@ -169,7 +169,7 @@ public visitor<S_attributes>         // to get clef, division, staves, time and 
     void checkTiedEnd	 ( const notevisitor& nv );
     void checkVoiceTime	 ( const rational& currTime, const rational& voiceTime);
     int  checkRestFormat	 ( const notevisitor& nv , rational posInMeasure);
-    bool checkNoteFormat	 ( const notevisitor& nv , rational posInMeasure);
+    bool checkNoteFormat	 ( const notevisitor& nv , rational posInMeasure, bool withDx);
     void checkWavyTrillBegin	 ( const notevisitor& nv );
     void checkWavyTrillEnd	 ( const notevisitor& nv );
     void checkTextEnd();

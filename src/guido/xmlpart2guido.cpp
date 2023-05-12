@@ -3248,7 +3248,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
     int pendingPops = 0;
     // Add chord group noteFormat if appropriate:
     // Later: maybe we should do this only for chords whose elements have the same "default-x"?!
-    if (checkNoteFormat(nvs.at(0), fCurrentVoicePosition)) {
+    if (checkNoteFormat(nvs.at(0), fCurrentVoicePosition, true)) {
         pendingPops++;
     }
     Sguidoelement chordtag = guidochord::create();
@@ -3349,8 +3349,8 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         
         /// Add Note head of X offset for note if necessary
         bool noteFormat = false;
-        if ((nv.getType() != kRest) && (!isProcessingChord))
-            noteFormat = checkNoteFormat(nv, fCurrentVoicePosition);
+        if (nv.getType() != kRest)
+            noteFormat = checkNoteFormat(nv, fCurrentVoicePosition, !isProcessingChord);
                 
         add (note);
         
@@ -3372,7 +3372,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         
     }
     
-    bool xmlpart2guido::checkNoteFormat	 ( const notevisitor& nv , rational posInMeasure)
+    bool xmlpart2guido::checkNoteFormat	 ( const notevisitor& nv , rational posInMeasure, bool withDx)
     {
         bool noteFormat = false;
         
@@ -3397,7 +3397,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
                                                      nv.getStaff(),
                                                      0);
         // Do not infer default-x on incomplete measures, and grace
-        if ( (noteDx != -999 && noteDx != 0) && !fPendingBar  && !isGrace() && !fMeasureHasTremolo )
+        if ( (noteDx != -999 && noteDx != 0) && withDx && !fPendingBar  && !isGrace() && !fMeasureHasTremolo )
         {
             stringstream s;
             s << "dx=" << noteDx ;
