@@ -2052,8 +2052,10 @@ bool xmlpart2guido::isSlurClosing(S_slur elt) {
         nextnote.forward_up();    // advance one step
     }
     
-    // Stop Conditions: (1) The first occurence of a slur STOP with the same NUMBER attribute should be considered as the target.
+    // Stop Conditions:
+    //  (1) The first occurence of a slur STOP with the same NUMBER attribute should be considered as the target.
     //  (2) If the measureNumber goes beyond current measure + 10 (this will greatly enhance speed!!). We can assume that slurs do not go beyond 10 measures in regular scores!
+    //  (3) if within the search, another `slur start` occurs with the same numbe (bug in MusicXML generation on grace notes in Finale)
     // Do not go beyond.
     
     int searchMeasureNum = fMeasNum;
@@ -2082,12 +2084,11 @@ bool xmlpart2guido::isSlurClosing(S_slur elt) {
                 iterSlur = iter->find(k_slur);
                 while (iterSlur != iter->end()) {
                     
-                    //                    if ((iterSlur->getAttributeValue("type")=="start") &&
-                    //                        ((iterSlur->getAttributeIntValue("number", 0) == internalXMLSlurNumber)) &&
-                    //                        (thisNoteVoice == fTargetVoice)) {
-                    //                        return false;
-                    //                    }
-
+                    if ((iterSlur->getAttributeValue("type")=="start") &&
+                        ((iterSlur->getAttributeIntValue("number", 0) == internalXMLSlurNumber)) &&
+                        (thisNoteVoice == fTargetVoice)) {
+                        return false;
+                    }
                     
                     if ((iterSlur->getAttributeValue("type")=="stop") &&
                         (iterSlur->getAttributeIntValue("number", 0) == internalXMLSlurNumber)
@@ -2095,7 +2096,6 @@ bool xmlpart2guido::isSlurClosing(S_slur elt) {
                         
                         if (thisNoteVoice == fTargetVoice) {
                             //cerr<< "\t\t\t FOUND Slur stop line:"<< iterSlur->getInputLineNumber()<< " voice:"<<thisNoteVoice<<" number:"<<iterSlur->getAttributeIntValue("number", 0)<<endl;
-
                             return true;
                         }else {
                             return false;   // we found the same slur numbering with "stop" on another voice!
