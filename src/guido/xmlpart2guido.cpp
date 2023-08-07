@@ -295,8 +295,11 @@ void xmlpart2guido::checkOctavaBegin(rational position) {
         for (auto o = octavas[currMeasure].cbegin(); o != octavas[currMeasure].cend(); ) {
             // o.second points to pair< time, type >
             if ( o->first < position && o->second != 0) {
-                parseOctaveShift(o->second);
-                octavas[currMeasure].erase(o++);
+                if (parseOctaveShift(o->second)) {
+                    octavas[currMeasure].erase(o++);
+                } else {
+                    ++o;
+                }
             }else {
                 ++o;
             }
@@ -311,8 +314,11 @@ void xmlpart2guido::checkOctavaEnd() {
         for (auto o = octavas[currMeasure].cbegin(); o != octavas[currMeasure].cend(); ) {
             // o.second points to pair< time, type >
             if ( o->first <= fCurrentVoicePosition && o->second == 0) {
-                parseOctaveShift(o->second);
-                octavas[currMeasure].erase(o++);
+                if (parseOctaveShift(o->second)) {
+                    octavas[currMeasure].erase(o++);
+                } else {
+                    ++o;
+                }
             }else {
                 ++o;
             }
@@ -649,7 +655,6 @@ void xmlpart2guido::checkOctavaEnd() {
                     
                     switch (elementType) {
                         case k_octave_shift: {
-                            //parseOctaveShift(element, directionStaff);
                             // IMPORTANT: DO NOT parse Octave-Shift during part visits! Now using a pre-calculated map.
                         }
                             break;
@@ -1459,7 +1464,10 @@ std::string xmlpart2guido::parseMetronome ( metronomevisitor &mv )
 
     
     //______________________________________________________________________________
-    void xmlpart2guido::parseOctaveShift(int type) {
+    bool xmlpart2guido::parseOctaveShift(int type) {
+        if (fCurrentStaff != fTargetStaff) {
+            return false;
+        }
         Sguidoelement tag = guidotag::create("oct");
 
         if (type) {
@@ -1486,27 +1494,7 @@ std::string xmlpart2guido::parseMetronome ( metronomevisitor &mv )
         else {
             add(tag);
         }
-    }
-    
-    void xmlpart2guido::parseOctaveShift(MusicXML2::xmlelement *elt, int staff)
-    {
-        const string& type = elt->getAttributeValue("type");
-        int size = elt->getAttributeIntValue("size", 8);
-        
-        switch (size) {
-            case 8:        size = 1; break;
-            case 15:    size = 2; break;
-            default:    return;
-        }
-        if (type != "stop") {
-            if (type == "up")
-                size = -size;
-        }
-        else {
-            size = 0;
-        }
-        
-        parseOctaveShift(size);
+        return true;
     }
     
     //______________________________________________________________________________

@@ -227,10 +227,9 @@ protected:
     
     bool parseWedge(MusicXML2::xmlelement *elt, int staff);
     
-    void parseOctaveShift(MusicXML2::xmlelement *elt, int staff);
     /// creates an Octave Shift for Guido.
     /// @param type 0 for stop, 8 for one-octave above, -8 for 1-oct below, 15 for two oct above, etc.
-    void parseOctaveShift(int type);
+    bool parseOctaveShift(int type);
     
     bool findNextNote(ctree<xmlelement>::iterator& elt, ctree<xmlelement>::iterator &nextnote);
     float getNoteDistanceFromStaffTop(const notevisitor& nv);
