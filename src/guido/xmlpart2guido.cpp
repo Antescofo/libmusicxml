@@ -51,6 +51,8 @@ namespace MusicXML2
         fNonStandardNoteHead = false;
         fLyricsManualSpacing = false;
         fTupletOpen = 0;
+        fTupletEvents = -1;
+        fTupletEventCounter = 0;
         fTremoloInProgress = false;
         fCurrentOctavaShift = 0;
         fShouldStopOctava = false;
@@ -74,6 +76,8 @@ namespace MusicXML2
         fPendingPops = 0;
         fLyricsManualSpacing = false;
         fTextTagOpen = 0;
+        fTupletEvents = -1;
+        fTupletEventCounter = 0;
         fTupletOpen = 0;
         fTremoloInProgress = false;
         fCurrentOctavaShift = 0;
@@ -97,6 +101,8 @@ namespace MusicXML2
         fHasLyrics = false;
         fLyricsManualSpacing = false;
         fTupletOpen = 0;
+        fTupletEvents = -1;
+        fTupletEventCounter = 0;
         fTremoloInProgress = false;
         fCurrentOctavaShift = 0;
         fShouldStopOctava = false;
@@ -2370,6 +2376,48 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
                     }
                     nextnote++;
                 }
+                // Check if no tuplet-stop has been detected and take measures:
+                if (nextnote == fCurrentMeasure->end()) {
+                    cerr<<"Tuplet doesn't stop! "<<numberOfEventsInTuplet<<endl;
+                    fTupletEvents = (int)numberOfEventsInTuplet;
+                    fTupletEventCounter = 1;
+                }
+            }
+            
+            // MusicXML Bug: Tuplets without a "stop". Find them and deal with them:
+            /// Browse through all elements of Tuplet until "stop"!
+            ctree<xmlelement>::iterator nextnote = find(fCurrentMeasure->begin(), fCurrentMeasure->end(), elt);
+            if (nextnote != fCurrentMeasure->end()) {
+                nextnote++;    // advance one step
+            }
+            while (nextnote != fCurrentMeasure->end()) {
+                // looking for the next note on the target voice
+                if ((nextnote->getType() == k_note) && (nextnote->getIntValue(k_voice,0) == fTargetVoice)) {
+                    ctree<xmlelement>::iterator iter;
+                    iter = nextnote->find(k_notations);
+                    if (iter != nextnote->end())
+                    {
+                        // There is a notation tag. Now check if there's a tuplet END with the same tuplet number.
+                        //      If yes, then increment and break.
+                        ctree<xmlelement>::iterator iterTuplet;
+                        iterTuplet = iter->find(k_tuplet);
+                        if (iterTuplet != iter->end())
+                        {
+                            // There is a tuplet tag!
+                            int newTupletNumber = iterTuplet->getAttributeIntValue("number", 0);
+                            if ((iterTuplet->getAttributeValue("type")=="stop")&&(newTupletNumber==thisTupletNumber))
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+                nextnote++;
+            }
+            // Check if no tuplet-stop has been detected and take measures:
+            if (nextnote == fCurrentMeasure->end()) {
+                fTupletEvents = (int)numberOfEventsInTuplet;
+                fTupletEventCounter = 0;
             }
             
             /// Determine the graphical format inside Tuplet
@@ -2442,19 +2490,27 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
     
     void xmlpart2guido::checkTupletEnd ( const std::vector<S_tuplet>& tuplets )
     {
-        std::vector<S_tuplet>::const_iterator i;
-        for (i = tuplets.begin(); (i != tuplets.end()); i++) {
-            // Do not check for tupletNumber (might cause conflict with nested Tuplets) -- We assume everything is there!
-            if (((*i)->getAttributeValue("type") == "stop") && (fTupletOpen>0)) { 
+        if (fTupletEvents == -1) {
+            std::vector<S_tuplet>::const_iterator i;
+            for (i = tuplets.begin(); (i != tuplets.end()); i++) {
+                // Do not check for tupletNumber (might cause conflict with nested Tuplets) -- We assume everything is there!
+                if (((*i)->getAttributeValue("type") == "stop") && (fTupletOpen>0)) {
+                    pop();
+                    fTupletOpen--;
+                }
+            }
+        } else {
+            // Hack for tuplets missing a "stop" type! (musicxml gen bug)
+            fTupletEventCounter++;
+            if (fTupletEventCounter == fTupletEvents) {
                 pop();
                 fTupletOpen--;
+                fTupletEvents = -1;
+                fTupletEventCounter = 0;
             }
         }
     }
-    
-    
-    
-    
+
     // ------------------- LYRICS Functions
     
     void xmlpart2guido::checkLyricBegin	 ( const std::vector<S_lyric>& lyrics )

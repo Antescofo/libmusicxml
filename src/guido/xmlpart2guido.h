@@ -82,6 +82,8 @@ public visitor<S_attributes>         // to get clef, division, staves, time and 
     int fTextTagOpen;
     int fCurrentOctavaShift; // 0 if none
     int fTupletOpen;    // Number of opened Tuplets
+    int fTupletEvents;    // Number of events in the ongoing Tuplet. This is used ONLY when we detect that a tuplet-start does NOT have a tuplet-stop (bad MusicXML!)
+    int fTupletEventCounter;
     std::queue<int> fTiedOpen;      // Number of ongoing opened Tied
     
     std::vector< std::pair<int, int> > fSlurStack; // first int: Internal num, 2nd int: XML num
