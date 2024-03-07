@@ -214,7 +214,7 @@ namespace MusicXML2
         bool notesOnly = false;
         rational currentTimeSign (0,1);
         std::vector<int> processedDirections;
-                
+
         // browse the parts voice by voice: allows to describe voices that spans over several staves
         for (unsigned int i = 0; i < voices->size(); i++) {
             int targetVoice = (*voices)[i];
@@ -329,6 +329,57 @@ namespace MusicXML2
             if (pv.totalPartDuration() > fTotalDuration) {
                 fTotalDuration = pv.totalPartDuration();
             }
+        }
+        
+        // Check for implicit staves in MusicXML and create them.
+        while (fCurrentStaffIndex < ps.countStaves()) {
+            fCurrentStaffIndex++;
+            Sguidoelement seq = guidoseq::create();
+            push (seq);
+            
+            Sguidoelement tag = guidotag::create("staff");
+            tag->add (guidoparam::create(fCurrentStaffIndex, false));
+            add (tag);
+            
+            // We must add the clef with attribute "number" corresponding to this staff, if present!
+            auto iter = elt->find(k_clef, elt->begin());
+            while (iter != elt->end()) {
+                // Check that clef belongs to this staff
+                if (iter->getAttributeIntValue("number", 1) == fCurrentStaffIndex) {
+                    string clefsign = iter->getValue(k_sign);
+                    int clefline = iter->getIntValue(k_line, 0);
+                    int clefoctavechange = iter->getIntValue(k_clef_octave_change, 0);
+                                        
+                    stringstream s;
+                    if ( clefsign == "G")            s << "g";
+                    else if ( clefsign == "F")    s << "f";
+                    else if ( clefsign == "C")    s << "c";
+                    else if ( clefsign == "percussion")    s << "perc";
+                    else if ( clefsign == "TAB")    s << "TAB";
+                    else if ( clefsign == "none")    s << "none";
+                    else {                                                    // unknown clef sign !!
+                        cerr << "warning: unknown clef sign \"" << clefsign << "\"" << endl;
+                        return;
+                    }
+                    
+                    string param;
+                    if (clefline != 0)  // was clefvisitor::kStandardLine
+                        s << clefline;
+                    s >> param;
+                    if (clefoctavechange == 1)
+                        param += "+8";
+                    else if (clefoctavechange == -1)
+                        param += "-8";
+                    
+                    
+                    Sguidoelement tag = guidotag::create("clef");
+                    tag->add (guidoparam::create(param));
+                    add(tag);
+                }
+                iter = elt->find(k_clef, iter++);
+            }
+            
+            pop();
         }
     }
     
