@@ -881,44 +881,48 @@ void xmlpart2guido::checkOctavaEnd() {
                                 commonDy += xml2guidovisitor::getYposition(element, 13, true);  // Should this be additive?
                             }
                             for (iter2 = element->lbegin(); iter2 != element->lend(); iter2++) {
+                                string itensity_type;
                                 if ((*iter2)->getType() != k_other_dynamics) {
-                                    tag = guidotag::create("intens");
-                                    tag->add (guidoparam::create((*iter2)->getName()));
-                                    rational offset(fCurrentOffset, fCurrentDivision*4);
-                                    float intensDx = timePositions.getDxForElement(element, fCurrentVoicePosition.toDouble(), fCurrentMeasure->getAttributeValue("number"), fTargetVoice, directionStaff, offset.toDouble());
-                                    
-                                    // add pending word parameters (for "before")
-                                    if (!generateAfter) {
-                                        if (wordParameterBuffer.size()) {
-                                            tag->add (guidoparam::create(wordParameterBuffer, false));
-                                            wordParameterBuffer = "";
-                                        }
-                                        
-                                        // apply inherited Y-position
-                                        stringstream s;
-                                        s << "dy=" << commonDy << "hs";
-                                        tag->add (guidoparam::create(s.str(), false));
-                                        
-                                        // Apply dx in case of consecutive dynamics (e.g. "sf ff")
-                                        if (dynamicsDx != 0.0) {
-                                            stringstream s;
-                                            s << "dx=" << dynamicsDx << "hs";
-                                            tag->add (guidoparam::create(s.str(), false));
-                                        }else if (intensDx != -999) {
-                                            stringstream s;
-                                            s << "dx=" << intensDx ;
-                                            tag->add (guidoparam::create(s.str(), false));
-                                        }
-                                        
-                                        /// Add Tag
-                                        if (fCurrentOffset > 0)
-                                            addDelayed(tag, fCurrentOffset);
-                                        else {
-                                            add(tag);
-                                        }
-                                    }
-                                    dynamicsDx = 4.0;   // heuristic HS to avoid collision between consecutive dynamics
+                                    itensity_type = (*iter2)->getName();
+                                } else {
+                                    itensity_type = (*iter2)->getValue();
                                 }
+                                tag = guidotag::create("intens");
+                                tag->add (guidoparam::create(itensity_type));
+                                rational offset(fCurrentOffset, fCurrentDivision*4);
+                                float intensDx = timePositions.getDxForElement(element, fCurrentVoicePosition.toDouble(), fCurrentMeasure->getAttributeValue("number"), fTargetVoice, directionStaff, offset.toDouble());
+                                
+                                // add pending word parameters (for "before")
+                                if (!generateAfter) {
+                                    if (wordParameterBuffer.size()) {
+                                        tag->add (guidoparam::create(wordParameterBuffer, false));
+                                        wordParameterBuffer = "";
+                                    }
+                                    
+                                    // apply inherited Y-position
+                                    stringstream s;
+                                    s << "dy=" << commonDy << "hs";
+                                    tag->add (guidoparam::create(s.str(), false));
+                                    
+                                    // Apply dx in case of consecutive dynamics (e.g. "sf ff")
+                                    if (dynamicsDx != 0.0) {
+                                        stringstream s;
+                                        s << "dx=" << dynamicsDx << "hs";
+                                        tag->add (guidoparam::create(s.str(), false));
+                                    }else if (intensDx != -999) {
+                                        stringstream s;
+                                        s << "dx=" << intensDx ;
+                                        tag->add (guidoparam::create(s.str(), false));
+                                    }
+                                    
+                                    /// Add Tag
+                                    if (fCurrentOffset > 0)
+                                        addDelayed(tag, fCurrentOffset);
+                                    else {
+                                        add(tag);
+                                    }
+                                }
+                                dynamicsDx = 4.0;   // heuristic HS to avoid collision between consecutive dynamics
                             }
                             
                             break;
