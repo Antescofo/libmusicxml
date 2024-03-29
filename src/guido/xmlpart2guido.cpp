@@ -198,6 +198,60 @@ namespace MusicXML2
         }
     }
 
+/// Check if measure number is in range for Partial Rendering || USED FOR DEBUGGING
+bool xmlpart2guido::checkMeasureRange(Sguidoelement& elt) {
+    if (!fCurrentMeasure) return true;
+    int currentXmlMeasure = atoi(fCurrentMeasure->getAttributeValue("number").c_str());
+    
+    if (!isFirstPartialMeasureDone) {
+        if ((currentXmlMeasure < fStartMeasure)) {
+            return false;
+        } else if (currentXmlMeasure == fStartMeasure) {
+            cerr<<"<<< yo Start Crit "<<fCurrentVoicePosition.toDouble()
+            <<" fBeginMeasureBeatOffset="<<fBeginMeasureBeatOffset/4.0
+            <<" isFirstPartialMeasureDone?"<<isFirstPartialMeasureDone;
+            if (fCurrentVoicePosition.toDouble() < fBeginMeasureBeatOffset/4.0) {
+                if (elt) {
+                    cerr<<"\tAvoid Add Staff:"<<fTargetStaff<<"-Meas:"<<fMeasNum<<" ";
+                    elt->print(cerr);
+                    cerr<<endl;
+                }
+                return false;
+            } else if (fCurrentVoicePosition.toDouble() >= fBeginMeasureBeatOffset/4.0) {
+                if (!isFirstPartialMeasureDone)
+                    makeFirstPartialMeasure();
+                // Additionally, we should ideally add partial events on current voice!
+                
+            }
+            cerr<<endl;
+        }
+    }
+     
+    //
+    if ((fEndMeasure>0)) {
+        if (fEndMeasureBeatOffset > 0.0) {
+            if (currentXmlMeasure > fEndMeasure+fEndMeasureOffset) {
+                return false;
+            } else if (currentXmlMeasure == fEndMeasure+fEndMeasureOffset) {
+                if (fCurrentVoicePosition.toDouble() >= fEndMeasureBeatOffset/4.0) {
+                    return false;
+                } else if (fEndPosition.toDouble() == 0) {
+                    fEndPosition = fCurrentScorePosition;
+                }
+            }
+            
+        } else
+        if (currentXmlMeasure >= fEndMeasure+fEndMeasureOffset) {
+            if ((currentXmlMeasure == fEndMeasure+fEndMeasureOffset)&&(fCurrentVoicePosition.toDouble() == 0.0)) {
+                fEndPosition = fCurrentScorePosition;
+            }
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 /// Check if measure number is in range for Partial Rendering
 bool xmlpart2guido::checkMeasureRange() {
     if (!fCurrentMeasure) return true;
@@ -236,18 +290,6 @@ bool xmlpart2guido::checkMeasureRange() {
             return false;
         }
     }
-    
-    // DEBUG
-//    cerr<<"\t <<< checkMeasureRange "<< currentXmlMeasure<< "|"
-//    <<fStartMeasure<<"+"<<fBeginMeasureBeatOffset/4.0<<"->"
-//    <<fEndMeasure+fEndMeasureOffset<<"+"<<fEndMeasureBeatOffset/4.0
-//    <<" fCurrentVoicePosition="<<fCurrentVoicePosition.toDouble()
-//    <<" isFirstPartialMeasureDone?"<<isFirstPartialMeasureDone<<" ";
-//    if (elt) {
-//        elt->print(cerr);
-//    }
-//    cerr<<endl;
-    //END-DEBUG
     
     return true;
 }
@@ -3563,7 +3605,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
             }
         }
         if (!scanVoice) {
-            // We should love measureTime even if we return to generate Empty entities
+            // We should move measureTime even if we return to generate Empty entities
             moveMeasureTime (getDuration(), scanVoice);
             return;
         }
@@ -3632,7 +3674,23 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         
         // Move measureTime after adding note/chord
         if (!isGrace() ) {
-            moveMeasureTime (getDuration(), scanVoice);
+            // In case of partial measures: check if this note is not going beyond start boundary.
+            int currentXmlMeasure = atoi(fCurrentMeasure->getAttributeValue("number").c_str());
+            if (!checkMeasureRange() && (fStartMeasure > 0)
+                && (currentXmlMeasure == fStartMeasure) ) {
+                long duration = getDuration();
+                rational r(duration, fCurrentDivision*4);
+                r.rationalise();
+                rational movedPos = fCurrentVoicePosition + r;
+                if ((movedPos.toDouble() > fBeginMeasureBeatOffset/4.0)) {
+                    // Then should just move the diff
+                    double diff = (movedPos.toDouble()*4.0 - fBeginMeasureBeatOffset)*fCurrentDivision;
+                    moveMeasureTime (int(diff), scanVoice);
+                } else {
+                    moveMeasureTime (getDuration(), scanVoice);
+                }
+            } else
+                moveMeasureTime (getDuration(), scanVoice);
         }
         
         if (fShouldStopOctava) {

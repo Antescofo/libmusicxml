@@ -297,6 +297,7 @@ private:
     /// returns distance of the note from top-staff in HS
     float distanceFromStaffTopForNote(const notevisitor& nv);
     
+    bool checkMeasureRange(Sguidoelement& elt);
     bool checkMeasureRange();
     
     void parseTime(ctree<xmlelement>::iterator &iter);

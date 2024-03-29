@@ -316,7 +316,9 @@ namespace MusicXML2
             pop();
             currentTimeSign = pv.getTimeSign();
             previousStaffHasLyrics = pv.hasLyrics();
-            fBeginPosition = pv.fStartPosition;
+            if (fBeginPosition.toDouble() < pv.fStartPosition.toDouble()) {
+                fBeginPosition = pv.fStartPosition;
+            }
             fEndPosition = pv.fEndPosition;
             processedDirections.insert(processedDirections.end(), pv.processedDirections.begin(), pv.processedDirections.end());
             
