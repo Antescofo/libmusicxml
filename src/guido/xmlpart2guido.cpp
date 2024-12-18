@@ -471,8 +471,10 @@ void xmlpart2guido::checkOctavaEnd() {
         fCurrentMeasurePosition.set(0, 1);
         fCurrentVoicePosition.set  (0, 1);
 
+        // For a measure that is "implicit", the measure number should NOT appear
         const string& implicit = elt->getAttributeValue ("implicit");
-        if (implicit == "yes") fPendingBar = false;
+        bool displayMeasureNum = true;
+        if (implicit == "yes") displayMeasureNum = false;
         if (fPendingBar || fDoubleBar) {
             // before adding a bar, we need to check that there are no repeat begin at this location
             ctree<xmlelement>::iterator repeat = elt->find(k_repeat);
@@ -490,6 +492,9 @@ void xmlpart2guido::checkOctavaEnd() {
                     std::string measNum = elt->getAttributeValue("number");
                     if (!measNum.empty())
                         parameters << "measNum="<< measNum;
+                    if (!displayMeasureNum) {
+                        parameters << ", displayMeasNum=\"false\"";
+                    }
                     tag->add(guidoparam::create(parameters.str(), false));
                 }
                 
