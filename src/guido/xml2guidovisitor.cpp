@@ -300,8 +300,16 @@ namespace MusicXML2
                     add (tag4);
                 }
             }
+            
+            /// If this Voice does NOT have any clef we must add.. (TODO: Check!!!)
+            if (notesOnly && fBeginMeasure <= 1) {
+                auto iter = elt->find(k_clef, elt->begin());
+                if (iter != elt->end()) {
+                    parseClef(iter);
+                }
+            }
                         
-            //// Browse XML and convert
+            /// Browse XML and convert
             //cerr<<"<<< Browse staff "<<targetStaff<<" voice:"<< targetVoice<<endl;
             xmlpart2guido pv(fGenerateComments, fGenerateStem, fGenerateBars,
                              fBeginMeasure, fBeginMeasureBeatOffset,
@@ -346,44 +354,48 @@ namespace MusicXML2
             // We must add the clef with attribute "number" corresponding to this staff, if present!
             auto iter = elt->find(k_clef, elt->begin());
             while (iter != elt->end()) {
-                // Check that clef belongs to this staff
-                if (iter->getAttributeIntValue("number", 1) == fCurrentStaffIndex) {
-                    string clefsign = iter->getValue(k_sign);
-                    int clefline = iter->getIntValue(k_line, 0);
-                    int clefoctavechange = iter->getIntValue(k_clef_octave_change, 0);
-                                        
-                    stringstream s;
-                    if ( clefsign == "G")            s << "g";
-                    else if ( clefsign == "F")    s << "f";
-                    else if ( clefsign == "C")    s << "c";
-                    else if ( clefsign == "percussion")    s << "perc";
-                    else if ( clefsign == "TAB")    s << "TAB";
-                    else if ( clefsign == "none")    s << "none";
-                    else {                                                    // unknown clef sign !!
-                        cerr << "warning: unknown clef sign \"" << clefsign << "\"" << endl;
-                        return;
-                    }
-                    
-                    string param;
-                    if (clefline != 0)  // was clefvisitor::kStandardLine
-                        s << clefline;
-                    s >> param;
-                    if (clefoctavechange == 1)
-                        param += "+8";
-                    else if (clefoctavechange == -1)
-                        param += "-8";
-                    
-                    
-                    Sguidoelement tag = guidotag::create("clef");
-                    tag->add (guidoparam::create(param));
-                    add(tag);
-                }
+                parseClef(iter);
                 iter = elt->find(k_clef, iter++);
             }
             
             pop();
         }
     }
+
+void xml2guidovisitor::parseClef(ctree<xmlelement>::iterator &iter) {
+    // Check that clef belongs to this staff
+    if (iter->getAttributeIntValue("number", 1) == fCurrentStaffIndex) {
+        string clefsign = iter->getValue(k_sign);
+        int clefline = iter->getIntValue(k_line, 0);
+        int clefoctavechange = iter->getIntValue(k_clef_octave_change, 0);
+                            
+        stringstream s;
+        if ( clefsign == "G")            s << "g";
+        else if ( clefsign == "F")    s << "f";
+        else if ( clefsign == "C")    s << "c";
+        else if ( clefsign == "percussion")    s << "perc";
+        else if ( clefsign == "TAB")    s << "TAB";
+        else if ( clefsign == "none")    s << "none";
+        else {                                                    // unknown clef sign !!
+            cerr << "warning: unknown clef sign \"" << clefsign << "\"" << endl;
+            return;
+        }
+        
+        string param;
+        if (clefline != 0)  // was clefvisitor::kStandardLine
+            s << clefline;
+        s >> param;
+        if (clefoctavechange == 1)
+            param += "+8";
+        else if (clefoctavechange == -1)
+            param += "-8";
+        
+        
+        Sguidoelement tag = guidotag::create("clef");
+        tag->add (guidoparam::create(param));
+        add(tag);
+    }
+}
     
     //______________________________________________________________________________
     void xml2guidovisitor::addPosition	( Sxmlelement elt, Sguidoelement& tag, float yoffset)

@@ -120,7 +120,7 @@ void partsummary::visitStart ( S_direction& elt )
     if (elt->find(k_octave_shift) == elt->end()) {
         return;
     }
-    int offset = elt->getLongValue(k_offset, 0);
+    long offset = elt->getLongValue(k_offset, 0);
     
     int voice = elt->getIntValue(k_voice, -1);
     int staff = elt->getIntValue(k_staff, 1);
@@ -237,7 +237,7 @@ int partsummary::countVoices (int staff) const
 	int count = 0;
 	map<int, map<int, int> >::const_iterator i = fStaffVoices.find( staff );
 	if (i != fStaffVoices.end()) {
-		count = i->second.size();
+		count = (int)i->second.size();
 	}
 	return count;
 }

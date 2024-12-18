@@ -96,6 +96,8 @@ protected:
     
     Sguidoelement& current ()				{ return fStack.top(); }
     
+    void parseClef(ctree<xmlelement>::iterator &iter);
+    
     bool previousStaffHasLyrics;
     
     int  fCurrentAccoladeIndex;
