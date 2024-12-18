@@ -285,6 +285,44 @@ void notevisitor::visitEnd ( S_note& elt )
             return "";
     }
 
+rational notevisitor::getDisplayDuration() const {
+    if (fGraphicType.empty()) {
+        return rational(0, 1);
+    }
+    
+    if (fGraphicType=="64th")
+    {
+        return rational(1, 64);
+    }
+    if (fGraphicType=="32nd")
+    {
+        return rational(1, 32);
+    }
+    else if (fGraphicType=="16th")
+    {
+        return rational(1, 16);
+    }
+    else if (fGraphicType=="eighth")
+    {
+        return rational(1, 8);
+    }
+    else if (fGraphicType=="quarter")
+    {
+        return rational(1, 4);
+    }
+    else if (fGraphicType=="half")
+    {
+        return rational(1, 2);
+    }
+    else if (fGraphicType=="whole")
+    {
+        return rational(1, 1);
+    } else {
+        cerr<<"Unknown fGraphicType "<<fGraphicType<<endl;
+        return rational(0, 1);
+    }
+}
+
 float notevisitor::getNoteHeadDy( string fCurClef ) const
 {
     float offset = 0.0;

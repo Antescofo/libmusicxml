@@ -173,6 +173,8 @@ class EXP notevisitor :
         static int			step2i(const std::string& step);
 		static std::string	i2step(int i);
     
+    rational getDisplayDuration() const;
+    
     int x_default;  // XML's x_default value which is the distance from beginning of measure
 
     protected:

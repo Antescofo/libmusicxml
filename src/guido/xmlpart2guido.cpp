@@ -3411,7 +3411,22 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         
         Sguidoelement note;
         
+        bool displayDurationTag = false;
         if (printObject) {
+            // If the give graphic type does NOT correspond to actual duration AND we are NOT in a Tuplet,
+            // then we need to add a displayDuration tag
+            rational displayDur = nv.getDisplayDuration();
+            if ((!nv.fGraphicType.empty())
+                && (fTupletOpen == 0)
+                && ( (dur.fNum != displayDur.getNumerator()) || (dur.fDenom != displayDur.getDenominator()) )
+                ) {
+                Sguidoelement tag = guidotag::create("displayDuration");
+                tag->add(guidoparam::create(displayDur.getNumerator(), false));
+                tag->add(guidoparam::create(displayDur.getDenominator(), false));
+                tag->add(guidoparam::create(0, false));
+                push(tag);
+                displayDurationTag = true;
+            }
             note = guidonote::create(fTargetVoice, name, octave, dur, accident);
         }else {
             note = guidonote::create(fTargetVoice, "empty", 0, dur, "");
@@ -3451,6 +3466,9 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         
         checkTiedEnd(nv);
 
+        if (displayDurationTag) {
+            pop();
+        }
         
         if (noteFormat)
             pop();
