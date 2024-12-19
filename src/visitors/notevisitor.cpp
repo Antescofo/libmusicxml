@@ -290,6 +290,14 @@ rational notevisitor::getDisplayDuration() const {
         return rational(0, 1);
     }
     
+    if (fGraphicType=="256th")
+    {
+        return rational(1, 128);
+    }
+    if (fGraphicType=="128th")
+    {
+        return rational(1, 128);
+    }
     if (fGraphicType=="64th")
     {
         return rational(1, 64);
