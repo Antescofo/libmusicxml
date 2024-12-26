@@ -290,9 +290,14 @@ rational notevisitor::getDisplayDuration() const {
         return rational(0, 1);
     }
     
-    if (fGraphicType=="256th")
-    {
-        return rational(1, 128);
+    if (fGraphicType=="1024th") {
+        return rational(1, 1024);
+    }
+    if (fGraphicType=="512th") {
+        return rational(1, 512);
+    }
+    if (fGraphicType=="256th") {
+        return rational(1, 256);
     }
     if (fGraphicType=="128th")
     {
@@ -322,10 +327,19 @@ rational notevisitor::getDisplayDuration() const {
     {
         return rational(1, 2);
     }
-    else if (fGraphicType=="whole")
-    {
+    else if (fGraphicType=="whole") {
         return rational(1, 1);
-    } else {
+    }
+    else if (fGraphicType=="breve") {
+        return rational(2, 1);
+    }
+    else if (fGraphicType=="long") {
+        return rational(4, 1);
+    }
+    else if (fGraphicType=="maxima") {
+        return rational(8, 1);
+    }
+    else {
         cerr<<"Unknown fGraphicType "<<fGraphicType<<endl;
         return rational(0, 1);
     }

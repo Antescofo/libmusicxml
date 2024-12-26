@@ -3416,6 +3416,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
             // If the give graphic type does NOT correspond to actual duration AND we are NOT in a Tuplet,
             // then we need to add a displayDuration tag
             rational displayDur = nv.getDisplayDuration();
+            //cerr<<"<<< Duration="<< dur.fNum<<"/"<<dur.fDenom<<" display="<< displayDur <<endl;
             if ((!nv.fGraphicType.empty())
                 && (fTupletOpen == 0)
                 && ( (dur.fNum != displayDur.getNumerator()) || (dur.fDenom != displayDur.getDenominator()) )
