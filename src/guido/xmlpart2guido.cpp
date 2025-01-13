@@ -390,7 +390,10 @@ void xmlpart2guido::checkOctavaEnd() {
             fCurrentVoicePosition.rationalise();
             if (fCurrentOctavaShift) {
                 checkOctavaEnd();
-            }else
+                if (fShouldStopOctava) {
+                    fShouldStopOctava = false;
+                }
+            } else
                 checkOctavaBegin(currTime);
         }
         // difference can be negative due to S_backup and it is normal!
@@ -1922,7 +1925,9 @@ void xmlpart2guido::parseTime(ctree<xmlelement>::iterator &iter) {
         for (i = tied.begin(); i != tied.end(); i++) {
             if ((*i)->getAttributeValue("type") == "start") {
                 if (!isTieClosing((*i), nv)) {
+#if DEBUG
                     cerr<<"Xml2Guido Warning: Tie opening but not closing until the next measure in "<<fMeasNum<<". Ignored!"<<endl;
+#endif
                     return;
                 }
                 /// MusicXML does not always contain the "number" attribtue! if not, we'll assign them ourselves!

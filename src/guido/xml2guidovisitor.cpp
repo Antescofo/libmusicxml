@@ -210,7 +210,7 @@ namespace MusicXML2
         browser.browse(*elt);
         
         smartlist<int>::ptr voices = ps.getVoices ();
-        int targetStaff = 0xffff;	// initialized to a value we'll unlikely encounter
+        int targetStaff = -1;	// initialized to a value we'll unlikely encounter
         bool notesOnly = false;
         rational currentTimeSign (0,1);
         std::vector<int> processedDirections;
@@ -219,13 +219,21 @@ namespace MusicXML2
         for (unsigned int i = 0; i < voices->size(); i++) {
             int targetVoice = (*voices)[i];
             int mainstaff = ps.getMainStaff(targetVoice);
+            if (targetStaff == -1) {
+                notesOnly = false;
+                targetStaff = mainstaff;
+                fCurrentStaffIndex++;
+            } else
             if (targetStaff == mainstaff) {
                 notesOnly = true;
             }
             else {
                 notesOnly = false;
+                // Only create staff if mainStaff > targetStaff
+                if (mainstaff > targetStaff) {
+                    fCurrentStaffIndex++;
+                }
                 targetStaff = mainstaff;
-                fCurrentStaffIndex++;
             }
             
             Sguidoelement seq = guidoseq::create();
