@@ -280,7 +280,7 @@ public:
     
     // Octavas must be re-applied across voices in the same staff. This property tracks them.
     /// Map containing octavas on a staff: measureNumberString, PositionInMeasure, Type (0 for stop)
-    std::map<std::string, std::map<rational, int>> octavas;
+    std::multimap<std::string, std::map<rational, int>> octavas;
 
 private:
     bool fHasLyrics, fMeasureHasTremolo;

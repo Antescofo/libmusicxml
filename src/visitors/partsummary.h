@@ -82,7 +82,7 @@ class EXP partsummary :
     MusicXMLTimePositions timePositions;
     
     /// Octave Shift Summary: staves, measures (by string name) and their position in measure, with value equal to Octava-shift Size
-    std::map<int, std::map<std::string, std::map<rational, int>>> fOctavas;
+    std::map<int, std::multimap<std::string, std::map<rational, int>>> fOctavas;
 		
 	protected:
 		virtual void visitStart ( S_part& elt);

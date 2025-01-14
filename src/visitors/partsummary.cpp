@@ -149,10 +149,7 @@ void partsummary::visitStart ( S_direction& elt )
         size = 0;
     }
     
-    fOctavas[staff][fCurrentMeasureNumber][curTime] = size;
-//    cerr<<"PS added octava staff:"<<staff
-//    <<" measure:"<<fCurrentMeasureNumber<<" time:"<<curTime<<" "<<curTime.toDouble()
-//    <<" Type:"<<size<<endl;
+    fOctavas[staff].insert({fCurrentMeasureNumber, {{curTime, size}}});
 }
 
 void partsummary::moveMeasureTime (long duration, int voice)

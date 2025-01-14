@@ -339,17 +339,30 @@ void xmlpart2guido::checkOctavaBegin(rational position) {
     // Generate Octave-shifts on current measure and current time
     std::string currMeasure = fCurrentMeasure->getAttributeValue("number");
 
-    if (octavas.count(currMeasure)) {
-        for (auto o = octavas[currMeasure].cbegin(); o != octavas[currMeasure].cend(); ) {
-            // o.second points to pair< time, type >
-            if ( o->first < position && o->second != 0) {
-                if (parseOctaveShift(o->second)) {
-                    octavas[currMeasure].erase(o++);
+    // Check if there are entries for `currMeasure`
+    auto range = octavas.equal_range(currMeasure);
+
+    if (range.first != range.second) {
+        for (auto it = range.first; it != range.second; ) {
+            // `it->second` is the std::map<rational, int>
+            for (auto o = it->second.begin(); o != it->second.end(); ) {
+                // `o->first` is the rational time, `o->second` is the type (int)
+                if (o->first < position && o->second != 0) {
+                    if (parseOctaveShift(o->second)) {
+                        o = it->second.erase(o); // Erase the element and update iterator
+                    } else {
+                        ++o; // Move to the next element
+                    }
                 } else {
-                    ++o;
+                    ++o; // Move to the next element
                 }
-            }else {
-                ++o;
+            }
+
+            // Erase the multimap entry if its associated map is empty
+            if (it->second.empty()) {
+                it = octavas.erase(it);
+            } else {
+                ++it;
             }
         }
     }
@@ -357,18 +370,30 @@ void xmlpart2guido::checkOctavaBegin(rational position) {
 
 void xmlpart2guido::checkOctavaEnd() {
     std::string currMeasure = fCurrentMeasure->getAttributeValue("number");
-    bool found = octavas.count(currMeasure);
-    if (found) {
-        for (auto o = octavas[currMeasure].cbegin(); o != octavas[currMeasure].cend(); ) {
-            // o.second points to pair< time, type >
-            if ( o->first <= fCurrentVoicePosition && o->second == 0) {
-                if (parseOctaveShift(o->second)) {
-                    octavas[currMeasure].erase(o++);
+    
+    auto range = octavas.equal_range(currMeasure);
+
+    if (range.first != range.second) { // Check if `currMeasure` exists
+        for (auto it = range.first; it != range.second; ) {
+            // `it->second` is the std::map<rational, int>
+            for (auto o = it->second.begin(); o != it->second.end(); ) {
+                // `o->first` is the rational time, `o->second` is the type (int)
+                if (o->first <= fCurrentVoicePosition && o->second == 0) {
+                    if (parseOctaveShift(o->second)) {
+                        o = it->second.erase(o); // Erase from the map and update iterator
+                    } else {
+                        ++o; // Move to the next entry in the map
+                    }
                 } else {
-                    ++o;
+                    ++o; // Move to the next entry in the map
                 }
-            }else {
-                ++o;
+            }
+
+            // If the map becomes empty, erase the current multimap entry
+            if (it->second.empty()) {
+                it = octavas.erase(it);
+            } else {
+                ++it; // Move to the next multimap entry
             }
         }
     }
@@ -393,8 +418,15 @@ void xmlpart2guido::checkOctavaEnd() {
                 if (fShouldStopOctava) {
                     fShouldStopOctava = false;
                 }
-            } else
+            } else {
                 checkOctavaBegin(currTime);
+                if (fCurrentOctavaShift) {
+                    checkOctavaEnd();
+                    if (fShouldStopOctava) {
+                        fShouldStopOctava = false;
+                    }
+                }
+            }
         }
         // difference can be negative due to S_backup and it is normal!
     }
