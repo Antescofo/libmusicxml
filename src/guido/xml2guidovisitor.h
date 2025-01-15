@@ -67,7 +67,8 @@ private:
     
     scoreHeader		fHeader;		// musicxml header elements (should be flushed at the beginning of the first voice)
     std::string		fCurrentPartID;
-    int				fCurrentStaffIndex;		// the index of the current guido staff
+    int				fCurrentStaffIndex,		// the index of the current guido staff
+    fCurrentPartStaffOffset;
     
     void start (Sguidoelement& elt)		{ fStack.push(elt); }
     void add (Sguidoelement& elt)		{ if (fStack.size()) fStack.top()->add(elt); }
@@ -96,7 +97,9 @@ protected:
     
     Sguidoelement& current ()				{ return fStack.top(); }
     
-    void parseClef(ctree<xmlelement>::iterator &iter);
+    void createStaff(int staffIndex, S_part& elt);
+    void parseClef(ctree<xmlelement>::iterator &iter, int staffIndex);
+    void parseTime(ctree<xmlelement>::iterator &iter);
     
     bool previousStaffHasLyrics;
     

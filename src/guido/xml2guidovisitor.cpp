@@ -38,7 +38,7 @@ namespace MusicXML2
                                        int endMeasure, int endMeasureOffset, double endMeasureBeatOffset) :
     fGenerateComments(generateComments), fGenerateStem(generateStem),
     fGenerateBars(generateBar), fGeneratePositions(true),
-    fCurrentStaffIndex(0), previousStaffHasLyrics(false), fCurrentAccoladeIndex(0), fPartNum(partNum),
+    fCurrentStaffIndex(0), fCurrentPartStaffOffset(0), previousStaffHasLyrics(false), fCurrentAccoladeIndex(0), fPartNum(partNum),
     fBeginMeasure(beginMeasure), fBeginMeasureBeatOffset(beginMeasureOffset),
     fEndMeasure(endMeasure), fEndMeasureOffset(endMeasureOffset), fEndMeasureBeatOffset(endMeasureBeatOffset),
     fTotalMeasures(0), fTotalDuration(0.0)
@@ -223,6 +223,12 @@ namespace MusicXML2
                 notesOnly = false;
                 targetStaff = mainstaff;
                 fCurrentStaffIndex++;
+                // Create intermediate staves if any.
+                // This happens when we enter a Part and the first voice's mainStaff is NOT the first staff! Example: "Bonis 6 pieces for 4 hands part 3"
+                while (fCurrentStaffIndex < targetStaff + fCurrentPartStaffOffset) {
+                    createStaff(fCurrentStaffIndex, elt);
+                    fCurrentStaffIndex++;
+                }
             } else
             if (targetStaff == mainstaff) {
                 notesOnly = true;
@@ -234,6 +240,11 @@ namespace MusicXML2
                     fCurrentStaffIndex++;
                 }
                 targetStaff = mainstaff;
+                // Create intermediate staves if needed
+                while (fCurrentStaffIndex < targetStaff+fCurrentPartStaffOffset) {
+                    createStaff(fCurrentStaffIndex, elt);
+                    fCurrentStaffIndex++;
+                }
             }
             
             Sguidoelement seq = guidoseq::create();
@@ -313,7 +324,7 @@ namespace MusicXML2
             if (notesOnly && fBeginMeasure <= 1) {
                 auto iter = elt->find(k_clef, elt->begin());
                 if (iter != elt->end()) {
-                    parseClef(iter);
+                    parseClef(iter, fCurrentStaffIndex);
                 }
             }
                         
@@ -350,29 +361,52 @@ namespace MusicXML2
         }
         
         // Check for implicit staves in MusicXML and create them.
-        while (fCurrentStaffIndex < ps.countStaves()) {
+        while (fCurrentStaffIndex < fCurrentPartStaffOffset + ps.countStaves()) {
             fCurrentStaffIndex++;
-            Sguidoelement seq = guidoseq::create();
-            push (seq);
-            
-            Sguidoelement tag = guidotag::create("staff");
-            tag->add (guidoparam::create(fCurrentStaffIndex, false));
-            add (tag);
-            
-            // We must add the clef with attribute "number" corresponding to this staff, if present!
-            auto iter = elt->find(k_clef, elt->begin());
-            while (iter != elt->end()) {
-                parseClef(iter);
-                iter = elt->find(k_clef, iter++);
-            }
-            
-            pop();
+            createStaff(fCurrentStaffIndex, elt);
         }
+        fCurrentPartStaffOffset += ps.countStaves();
     }
 
-void xml2guidovisitor::parseClef(ctree<xmlelement>::iterator &iter) {
+void xml2guidovisitor::createStaff(int staffIndex, S_part& elt) {
+    Sguidoelement seq = guidoseq::create();
+    push (seq);
+    
+    Sguidoelement tag = guidotag::create("staff");
+    tag->add (guidoparam::create(staffIndex, false));
+    add (tag);
+    
+    // Add clefs
+    auto iter = elt->find(k_clef, elt->begin());
+    while (iter != elt->end()) {
+        parseClef(iter, staffIndex);
+        iter = elt->find(k_clef, iter++);
+    }
+    
+    // Add Key
+    iter = elt->find(k_key, elt->begin());
+    while (iter != elt->end()) {
+        string keymode = iter->getValue(k_mode);
+        int keyfifths = iter->getIntValue(k_fifths, 0);
+        Sguidoelement tag = guidotag::create("key");
+        tag->add (guidoparam::create(keyfifths, false));
+        add (tag);
+        iter = elt->find(k_key, iter++);
+    }
+    
+    // Add Meter
+    iter = elt->find(k_time, elt->begin());
+    if (iter != elt->end()) {
+        parseTime(iter);
+        //iter = elt->find(k_key, iter++);
+    }
+    
+    pop();
+}
+
+void xml2guidovisitor::parseClef(ctree<xmlelement>::iterator &iter, int staffIndex) {
     // Check that clef belongs to this staff
-    if (iter->getAttributeIntValue("number", 1) == fCurrentStaffIndex) {
+    if (iter->getAttributeIntValue("number", 1) == staffIndex) {
         string clefsign = iter->getValue(k_sign);
         int clefline = iter->getIntValue(k_line, 0);
         int clefoctavechange = iter->getIntValue(k_clef_octave_change, 0);
@@ -405,6 +439,82 @@ void xml2guidovisitor::parseClef(ctree<xmlelement>::iterator &iter) {
     }
 }
     
+void xml2guidovisitor::parseTime(ctree<xmlelement>::iterator &iter) {
+    bool senzamesura = (iter->find(k_senza_misura) != iter->end());
+    string timesymbol = iter->getAttributeValue("symbol");
+    std::vector<std::pair<std::string,std::string> > fTimeSignInternal ;
+    rational fCurrentTimeSign;
+    
+    // IOSEPRAC-185: Get all pairs for Composite Time Signatures
+    ctree<xmlelement>::iterator iter_beat = iter->find(k_beats);
+    ctree<xmlelement>::iterator iter_beatType = iter->find(k_beat_type);
+    
+    while (iter_beat != iter->end())
+    {
+        fTimeSignInternal.push_back(make_pair(iter_beat->getValue(),
+                                              iter_beatType->getValue()));
+        iter_beat = iter->find(k_beats, iter_beat++);
+        iter_beatType = iter->find(k_beat_type, iter_beatType++);
+    }
+    
+    /// Actions:
+    string timesign;
+    if (!senzamesura) {
+        if (timesymbol == "common") {
+            size_t index = 0;
+            rational ts(0,1);
+            if (index < fTimeSignInternal.size()) {
+                const pair<string,string>& tss = fTimeSignInternal[index];
+                long num = strtol (tss.first.c_str(), 0, 10);
+                long denum = strtol (tss.second.c_str(), 0, 10);
+                if (num && denum) ts.set(num, denum);
+            }
+            ///
+            if ((ts.getDenominator() == 2) && (ts.getNumerator() == 2))
+                timesign = "C/";
+            else if ((ts.getDenominator() == 4) && (ts.getNumerator() == 4))
+                timesign = "C";
+            else
+                timesign = string(ts);
+            fCurrentTimeSign = ts;
+        }
+        else if (timesymbol == "cut") {
+            timesign = "C/";
+            fCurrentTimeSign = rational(2,2);
+        }
+        else {
+            stringstream s; string sep ="";
+            fCurrentTimeSign.set(0,1);
+            for (unsigned int i = 0; i < fTimeSignInternal.size(); i++) {
+                s << sep << fTimeSignInternal[i].first << "/" << fTimeSignInternal[i].second;
+                sep = "+";
+                size_t index = i;
+                rational ts(0,1);
+                if (index < fTimeSignInternal.size()) {
+                    const pair<string,string>& tss = fTimeSignInternal[index];
+                    long num = strtol (tss.first.c_str(), 0, 10);
+                    long denum = strtol (tss.second.c_str(), 0, 10);
+                    if (num && denum) ts.set(num, denum);
+                }
+                ///
+                fCurrentTimeSign += ts;
+            }
+            s >> timesign;
+        }
+    }
+    
+    Sguidoelement tag = guidotag::create("meter");
+    tag->add (guidoparam::create(timesign));
+    if (fGenerateBars)
+        tag->add (guidoparam::create("autoBarlines=\"off\"", false));
+    if (true)
+        tag->add (guidoparam::create("autoMeasuresNum=\"system\"", false));
+    
+    if (iter->getAttributeValue("print-object")!="no") {
+        add(tag);
+    }
+}
+
     //______________________________________________________________________________
     void xml2guidovisitor::addPosition	( Sxmlelement elt, Sguidoelement& tag, float yoffset)
     {
