@@ -3388,7 +3388,6 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
     pendingPops++;
     // Generate notes with correct fingering
     for ( int index = 0; index < nvs.size(); index++) {
-        checkStaff(nvs.at(index).getStaff());
         newNote(nvs.at(index), nvs.at(index).getFingerings());
     }
     while (pendingPops--) pop();
@@ -3397,7 +3396,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
     //______________________________________________________________________________
     void xmlpart2guido::newNote( const notevisitor& nv, const std::vector<Sxmlelement>& fingerings)
     {
-        checkStaff(notevisitor::getStaff());
+        checkStaff(nv.getStaff());
         // Check for Tied Begin
         checkTiedBegin(nv);
         
