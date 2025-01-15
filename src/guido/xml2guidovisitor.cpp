@@ -286,15 +286,16 @@ namespace MusicXML2
             flushPartHeader (fPartHeaders[elt->getAttributeValue("id")]);
             flushPartGroup  (elt->getAttributeValue("id"));
             
+
             //// Add Accolade if countStaves on this Part is >1, and we are entering span
-            if ((ps.countStaves()>1)&&(fCurrentStaffIndex>fCurrentAccoladeIndex))
-            {
-                int rangeEnd = fCurrentStaffIndex + ps.countStaves() - 1;
+            if ((ps.countStaves()>1)&&(fCurrentStaffIndex>fCurrentAccoladeIndex)) {
+                int rangeBegin = min(fCurrentStaffIndex, fCurrentPartStaffOffset+1);
+                int rangeEnd = fCurrentPartStaffOffset + ps.countStaves();
 
 				stringstream accol;
-				accol << "id=" << fCurrentAccoladeIndex << ", range=\"" << fCurrentStaffIndex << "-" << rangeEnd << "\"";
+				accol << "id=" << fCurrentAccoladeIndex << ", range=\"" << rangeBegin << "-" << rangeEnd << "\"";
 				stringstream barformat;
-				barformat << "style= \"system\", range=\"" << fCurrentStaffIndex << "-" << rangeEnd << "\"";
+				barformat << "style= \"system\", range=\"" << rangeBegin << "-" << rangeEnd << "\"";
 				
                 Sguidoelement tag3 = guidotag::create("accol");
                 tag3->add (guidoparam::create(accol.str(), false));
