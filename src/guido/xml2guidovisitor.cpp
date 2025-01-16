@@ -341,7 +341,13 @@ namespace MusicXML2
             pv.processedDirections = processedDirections;
             pv.timePositions = ps.timePositions;
             browser.browse(*elt);
-            pop();
+            // Add an explicite \endBar on the targetStaff
+            Sguidoelement tagStaff = guidotag::create("staff");
+            tagStaff->add (guidoparam::create(fCurrentStaffIndex, false));
+            add (tagStaff);
+            Sguidoelement tagEndBar = guidotag::create("endBar");
+            add (tagEndBar);
+            pop(); // Close staff
             currentTimeSign = pv.getTimeSign();
             previousStaffHasLyrics = pv.hasLyrics();
             if (fBeginPosition.toDouble() < pv.fStartPosition.toDouble()) {
