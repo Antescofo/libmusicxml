@@ -145,6 +145,7 @@ public:
     virtual ~xml2guidovisitor() {}
     
     Sguidoelement convert (const Sxmlelement& xml);
+    string convertToString (const Sxmlelement& xml);
     
     // this is to control exact positionning of elements when information is present
     // ie converts relative-x/-y into dx/dy attributes

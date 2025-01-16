@@ -57,6 +57,19 @@ namespace MusicXML2
         }
         return gmn;
     }
+
+    string xml2guidovisitor::convertToString(const Sxmlelement& xml)
+    {
+        if (xml) {
+            std::ostringstream oss;
+            tree_browser<xmlelement> browser(this);
+            browser.browse(*xml);
+            Sguidoelement gmn = current();
+            oss << gmn << endl;
+            return oss.str();
+        }
+        return "";
+    }
     
     //______________________________________________________________________________
     // the score header contains information like title, author etc..
@@ -234,9 +247,8 @@ namespace MusicXML2
                 notesOnly = true;
             }
             else {
-                notesOnly = false;
-                // Only create staff if mainStaff > targetStaff
-                if (mainstaff > targetStaff) {
+                // Only create staff if mainStaff > targetStaff and the corresponding staff doesn't exist!
+                if ((mainstaff > targetStaff) && (fCurrentStaffIndex < mainstaff+fCurrentPartStaffOffset) ) {
                     fCurrentStaffIndex++;
                 }
                 targetStaff = mainstaff;
