@@ -2410,7 +2410,7 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
                 numberOfNormalNotes = tuplet_normal->getIntValue(k_tuplet_number, 1);
             }
 
-            //// Rational : If all note durations are equal, then use the dispNote attribute. If not, then don't!
+            //// Rational : If all note durations are equal, then use the dispNote attribute. If not, then don't use Tuplets at all and let a note's \DisplayDuration take care of the appearance
             if (useDispNoteAttribute == false) {
                 /// Get Top Note Guido Duration
                 rational topNoteDurRational = NoteType::type2rational(NoteType::xml(nv.getGraphicType()));
@@ -2440,7 +2440,9 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
 
                         if ( topNoteDurRational != nextNoteDur ) {
                             useDispNoteAttribute =  false;
-                            break;
+                            // In this case, we simply return and let Note's DisplayDuration do the job!
+                            return;
+                            //break;
                         }
                         
                         ctree<xmlelement>::iterator iter;
