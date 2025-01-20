@@ -246,9 +246,11 @@ namespace MusicXML2
             if (targetStaff == mainstaff) {
                 notesOnly = true;
             }
-            else {
+            else
+            {
                 // Only create staff if mainStaff > targetStaff and the corresponding staff doesn't exist!
                 if ((mainstaff > targetStaff) && (fCurrentStaffIndex < mainstaff+fCurrentPartStaffOffset) ) {
+                    notesOnly = false;
                     fCurrentStaffIndex++;
                 }
                 targetStaff = mainstaff;
@@ -395,16 +397,16 @@ void xml2guidovisitor::createStaff(int staffIndex, S_part& elt) {
     tag->add (guidoparam::create(staffIndex, false));
     add (tag);
     
-    // Add clefs
+    // Add first observed Clef
     auto iter = elt->find(k_clef, elt->begin());
-    while (iter != elt->end()) {
+    if (iter != elt->end()) {
         parseClef(iter, staffIndex);
         iter = elt->find(k_clef, iter++);
     }
     
-    // Add Key
+    // Add first observed Key
     iter = elt->find(k_key, elt->begin());
-    while (iter != elt->end()) {
+    if (iter != elt->end()) {
         string keymode = iter->getValue(k_mode);
         int keyfifths = iter->getIntValue(k_fifths, 0);
         Sguidoelement tag = guidotag::create("key");
