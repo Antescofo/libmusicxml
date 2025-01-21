@@ -396,30 +396,115 @@ void xml2guidovisitor::createStaff(int staffIndex, S_part& elt) {
     Sguidoelement tag = guidotag::create("staff");
     tag->add (guidoparam::create(staffIndex, false));
     add (tag);
-    
-    // Add first observed Clef
-    auto iter = elt->find(k_clef, elt->begin());
-    if (iter != elt->end()) {
-        parseClef(iter, staffIndex);
-        iter = elt->find(k_clef, iter++);
+        
+    if (fBeginMeasure <= 1) {
+        // Add first observed Clef
+        auto iter = elt->find(k_clef, elt->begin());
+        bool found = false;
+        while (iter != elt->end()) {
+            int staffnum = iter->getAttributeIntValue("number", 1);
+            if (staffnum == staffIndex && (!found)) {
+                parseClef(iter, staffIndex);
+                found = true;
+            }
+            iter = elt->find(k_clef, iter++);
+        }
+    } else {
+        // Find the LAST occurence of Clef before fBeginMeasure
+        auto iter = elt->find(k_measure, elt->begin());
+        int currentXmlMeasure = 0;
+        if (iter != elt->end()) {
+            currentXmlMeasure = atoi(iter->getAttributeValue("number").c_str());
+        }
+        ctree<xmlelement>::iterator lastClef = elt->end();
+        while (iter != elt->end() && currentXmlMeasure < fBeginMeasure) {
+            auto clef = iter->find(k_clef, iter->begin());
+            while (clef != iter->end()) {
+                int staffnum = clef->getAttributeIntValue("number", 1);
+                if (staffnum == staffIndex) {
+                    lastClef = clef;
+                }
+                clef = iter->find(k_clef, clef++);
+            }
+            // Find next measure
+            iter = elt->find(k_measure, iter++);
+            if (iter != elt->end()) {
+                currentXmlMeasure = atoi(iter->getAttributeValue("number").c_str());
+            }
+        }
+        if (lastClef != elt->end()) {
+            parseClef(lastClef, staffIndex);
+        }
     }
     
-    // Add first observed Key
-    iter = elt->find(k_key, elt->begin());
-    if (iter != elt->end()) {
-        string keymode = iter->getValue(k_mode);
-        int keyfifths = iter->getIntValue(k_fifths, 0);
-        Sguidoelement tag = guidotag::create("key");
-        tag->add (guidoparam::create(keyfifths, false));
-        add (tag);
-        iter = elt->find(k_key, iter++);
+    if (fBeginMeasure <= 1) {
+        // Add first observed Key
+        auto iter = elt->find(k_key, elt->begin());
+        if (iter != elt->end()) {
+            string keymode = iter->getValue(k_mode);
+            int keyfifths = iter->getIntValue(k_fifths, 0);
+            Sguidoelement tag = guidotag::create("key");
+            tag->add (guidoparam::create(keyfifths, false));
+            add (tag);
+        }
+    } else {
+        // Find the LAST occurence of KEY before fBeginMeasure
+        auto iter = elt->find(k_measure, elt->begin());
+        int currentXmlMeasure = 0;
+        if (iter != elt->end()) {
+            currentXmlMeasure = atoi(iter->getAttributeValue("number").c_str());
+        }
+        ctree<xmlelement>::iterator lastKey = elt->end();
+        while (iter != elt->end() && currentXmlMeasure < fBeginMeasure) {
+            auto key = iter->find(k_key, iter->begin());
+            if (key != iter->end()) {
+                lastKey = key;
+            }
+            
+            // Find next measure
+            iter = elt->find(k_measure, iter++);
+            if (iter != elt->end()) {
+                currentXmlMeasure = atoi(iter->getAttributeValue("number").c_str());
+            }
+        }
+        if (lastKey != elt->end()) {
+            string keymode = lastKey->getValue(k_mode);
+            int keyfifths = lastKey->getIntValue(k_fifths, 0);
+            Sguidoelement tag = guidotag::create("key");
+            tag->add (guidoparam::create(keyfifths, false));
+            add (tag);
+        }
     }
     
     // Add Meter
-    iter = elt->find(k_time, elt->begin());
-    if (iter != elt->end()) {
-        parseTime(iter);
-        //iter = elt->find(k_key, iter++);
+    if (fBeginMeasure <= 1) {
+        auto iter = elt->find(k_time, elt->begin());
+        if (iter != elt->end()) {
+            parseTime(iter);
+        }
+    } else {
+        // Find the LAST occurence of TIME before fBeginMeasure
+        auto iter = elt->find(k_measure, elt->begin());
+        int currentXmlMeasure = 0;
+        if (iter != elt->end()) {
+            currentXmlMeasure = atoi(iter->getAttributeValue("number").c_str());
+        }
+        ctree<xmlelement>::iterator lastTime = elt->end();
+        while (iter != elt->end() && currentXmlMeasure < fBeginMeasure) {
+            auto time = iter->find(k_key, iter->begin());
+            if (time != iter->end()) {
+                lastTime = time;
+            }
+            
+            // Find next measure
+            iter = elt->find(k_measure, iter++);
+            if (iter != elt->end()) {
+                currentXmlMeasure = atoi(iter->getAttributeValue("number").c_str());
+            }
+        }
+        if (lastTime != elt->end()) {
+            parseTime(lastTime);
+        }
     }
     
     pop();
