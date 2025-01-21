@@ -398,6 +398,37 @@ void xmlpart2guido::checkOctavaEnd() {
         }
     }
 }
+
+void xmlpart2guido::checkOctavaPendingEnd() {
+    std::string currMeasure = fCurrentMeasure->getAttributeValue("number");
+    
+    auto range = octavas.equal_range(currMeasure);
+
+    if (range.first != range.second) { // Check if `currMeasure` exists
+        for (auto it = range.first; it != range.second; ) {
+            // `it->second` is the std::map<rational, int>
+            for (auto o = it->second.begin(); o != it->second.end(); ) {
+                // `o->first` is the rational time, `o->second` is the type (int)
+                if (o->first < fCurrentVoicePosition && o->second == 0) {
+                    if (parseOctaveShift(o->second)) {
+                        o = it->second.erase(o); // Erase from the map and update iterator
+                    } else {
+                        ++o; // Move to the next entry in the map
+                    }
+                } else {
+                    ++o; // Move to the next entry in the map
+                }
+            }
+
+            // If the map becomes empty, erase the current multimap entry
+            if (it->second.empty()) {
+                it = octavas.erase(it);
+            } else {
+                ++it; // Move to the next multimap entry
+            }
+        }
+    }
+}
     
     //______________________________________________________________________________
     // check the current position in the current voice:  when it lags behind
@@ -743,7 +774,8 @@ void xmlpart2guido::checkOctavaEnd() {
                     
                     switch (elementType) {
                         case k_octave_shift: {
-                            // IMPORTANT: DO NOT parse Octave-Shift during part visits! Now using a pre-calculated map.
+                            // IMPORTANT: We use an external map to avoid parsing Octava End too early since in some XMLs they are put before the start. This is handled by checkOctavaPendingEnd(). But we want to visit them for endings on grace notes!
+                            checkOctavaEnd();
                         }
                             break;
                         case k_pedal:
@@ -1566,6 +1598,10 @@ std::string xmlpart2guido::parseMetronome ( metronomevisitor &mv )
             tag->add (guidoparam::create(type, false));
             fCurrentOctavaShift = type;
         }else { // stop
+            // In some XMLs, Octava stop occurs BEFORE the start! Postpone..
+            if (fCurrentOctavaShift == 0) {
+                return false;
+            }
             fShouldStopOctava = true;
             //  Here the octave offset should take effect immediately, not the next time it is created
             fCurrentOctavaShift = 0;
@@ -1585,6 +1621,7 @@ std::string xmlpart2guido::parseMetronome ( metronomevisitor &mv )
         }
         else {
             add(tag);
+            //cerr<<"\t OCTAVA ADDDED: "<<tag<<endl;
         }
         return true;
     }
@@ -3245,6 +3282,11 @@ void xmlpart2guido::checkPostArticulation ( const notevisitor& note )
                             }
                         }else if (nextnote->getType() == k_direction) {
                             // should parse direction BEFORE grace occurs: visit the element and put in the eraser stack
+                            // EXCEPTION: k_octave_shift where an oct<0> (closure) can occur AFTER graces are parsed!
+                            if (nextnote->find(k_octave_shift) != nextnote->end()) {
+                                nextnote.forward_up(); // forward one element
+                                continue;
+                            }
                             nextnote->acceptIn(*this);
                             nextnote->acceptOut(*this);
                             fDirectionEraserStack.push(nextnote->getInputLineNumber());
@@ -3688,7 +3730,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
             checkTupletEnd(notevisitor::getTuplet());
             checkSlurEnd (notevisitor::getSlur());
             checkBeamEnd (notevisitor::getBeam());
-            checkOctavaEnd();
+            checkOctavaPendingEnd();
             checkWedgeStop();
             return;
         }
@@ -3785,7 +3827,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         
         checkDelayed (getDuration(), false);        // check for delayed elements (directions with offset) and indicated before = false
         
-        checkOctavaEnd();
+        checkOctavaPendingEnd();
         
         checkWedgeStop();
 

@@ -304,6 +304,9 @@ private:
     void parseKey(ctree<xmlelement>::iterator &iter);
     
     void checkOctavaBegin(rational position);
+    /// Checks and parses a pending Octava-Shift AFTER the current time position
+    void checkOctavaPendingEnd();
+    /// Checks and parses an Octava-Shift on the current time position
     void checkOctavaEnd();
     
     Sguidoelement lastKey;  // Storage used for Partial Conversions
