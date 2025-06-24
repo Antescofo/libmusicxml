@@ -1597,6 +1597,7 @@ std::string xmlpart2guido::parseMetronome ( metronomevisitor &mv )
         if (type) {
             tag->add (guidoparam::create(type, false));
             fCurrentOctavaShift = type;
+            fShouldStopOctava = false;
         }else { // stop
             // In some XMLs, Octava stop occurs BEFORE the start! Postpone..
             if (fCurrentOctavaShift == 0) {
