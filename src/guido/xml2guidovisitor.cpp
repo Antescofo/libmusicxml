@@ -245,9 +245,7 @@ namespace MusicXML2
             } else
             if (targetStaff == mainstaff) {
                 notesOnly = true;
-            }
-            else
-            {
+            } else {
                 // Only create staff if mainStaff > targetStaff and the corresponding staff doesn't exist!
                 if ((mainstaff > targetStaff) && (fCurrentStaffIndex < mainstaff+fCurrentPartStaffOffset) ) {
                     notesOnly = false;
@@ -344,7 +342,7 @@ namespace MusicXML2
             }
                         
             /// Browse XML and convert
-            //cerr<<"<<< Browse staff "<<targetStaff<<" voice:"<< targetVoice<<endl;
+            //cerr<<"||| Browse staff "<<targetStaff<<" voice:"<< targetVoice<< " notesOnly="<<notesOnly<<endl;
             xmlpart2guido pv(fGenerateComments, fGenerateStem, fGenerateBars,
                              fBeginMeasure, fBeginMeasureBeatOffset,
                              fEndMeasure, fEndMeasureOffset, fEndMeasureBeatOffset);
@@ -352,6 +350,7 @@ namespace MusicXML2
             xml_tree_browser browser(&pv);
             pv.initialize(seq, targetStaff, fCurrentStaffIndex, targetVoice, notesOnly, currentTimeSign);
             pv.octavas = ps.fOctavas[targetStaff];
+            pv.harmonyVoices = ps.fHarmonyVoices[targetStaff];
             pv.processedDirections = processedDirections;
             pv.timePositions = ps.timePositions;
             browser.browse(*elt);

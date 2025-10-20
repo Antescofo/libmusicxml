@@ -28,6 +28,8 @@ void partsummary::visitStart ( S_part& elt)
 	fStaves.clear();
 	fVoices.clear();
 	fStaffVoices.clear();
+    fCurrentVoiceNumber = 1;
+    fHarmonyVoices.clear();
 }
 
 //________________________________________________________________________
@@ -71,6 +73,7 @@ void partsummary::visitEnd ( S_note& elt)
                                       getMeasureTime(getVoice()).toDouble(),
                                       *this);
     }
+    fCurrentVoiceNumber = getVoice();
     if (!isGrace()) {
         moveMeasureTime (getDuration(), getVoice());
     }
@@ -112,6 +115,10 @@ void partsummary::visitStart ( S_forward& elt )
 {
     int duration = elt->getIntValue(k_duration, 0);
     int voice = elt->getIntValue(k_voice, kUndefinedVoice);
+    if (voice != kUndefinedVoice)
+        fCurrentVoiceNumber = voice;
+    
+    fVoices.emplace(voice, 0); // emplace will do nothing if 'voice' is already a key
     moveMeasureTime(duration, voice);
 }
 
@@ -150,6 +157,21 @@ void partsummary::visitStart ( S_direction& elt )
     }
     
     fOctavas[staff].insert({fCurrentMeasureNumber, {{curTime, size}}});
+}
+
+void partsummary::visitStart(S_harmony& elt) {
+    std::string fCurrentMeasureNumber = fCurrentMeasure->getAttributeValue("number");
+    long offset = elt->getLongValue(k_offset, 0);
+    int staff = elt->getIntValue(k_staff, 1);
+    int voice =  fCurrentVoiceNumber;
+    rational curTime = getMeasureTime(voice);
+    if (offset != 0) {
+        rational ratOffset(offset, fCurrentDivision*4);
+        curTime += ratOffset;
+        curTime.rationalise();
+    }
+    //cerr<<"PartSummary add Harmony "<<fCurrentMeasureNumber<<" @"<<curTime<<" Voice="<<voice<<endl;
+    fHarmonyVoices[staff].insert({fCurrentMeasureNumber, {{curTime, voice}}});
 }
 
 void partsummary::moveMeasureTime (long duration, int voice)

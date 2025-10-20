@@ -45,6 +45,7 @@ class EXP partsummary :
     public visitor<S_backup>,
     public visitor<S_forward>,
     public visitor<S_print>,
+    public visitor<S_harmony>,
     public visitor<S_direction>
 {
 	public:
@@ -83,6 +84,10 @@ class EXP partsummary :
     
     /// Octave Shift Summary: staves, measures (by string name) and their position in measure, with value equal to Octava-shift Size
     std::map<int, std::multimap<std::string, std::map<rational, int>>> fOctavas;
+    
+    /// Harmony voice number on measure Position <- measureString <- staffNumber
+    std::map<int, std::multimap<std::string, std::map<rational, int>>> fHarmonyVoices;
+
 		
 	protected:
 		virtual void visitStart ( S_part& elt);
@@ -94,6 +99,7 @@ class EXP partsummary :
     virtual void visitStart ( S_divisions& elt );
     virtual void visitStart ( S_measure& elt );
     virtual void visitStart ( S_direction& elt );
+    virtual void visitStart ( S_harmony& elt );
 
 	private:
 		// count of staves (from the staves element)
@@ -111,6 +117,7 @@ class EXP partsummary :
     
     long    fCurrentDivision;        // the current measure division, expresses the time unit in division of the quarter note
     S_measure fCurrentMeasure;
+    int fCurrentVoiceNumber;
     
     void moveMeasureTime (long duration, int voice);
     

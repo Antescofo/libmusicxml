@@ -282,6 +282,8 @@ public:
     /// Map containing octavas on a staff: measureNumberString, PositionInMeasure, Type (0 for stop)
     std::multimap<std::string, std::map<rational, int>> octavas;
 
+    std::multimap<std::string, std::map<rational, int>> harmonyVoices;
+
 private:
     bool fHasLyrics, fMeasureHasTremolo;
 

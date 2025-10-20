@@ -1197,7 +1197,34 @@ void xmlpart2guido::checkOctavaPendingEnd() {
     }
 
 void xmlpart2guido::visitEnd(S_harmony& elt) {
-    if (fNotesOnly) return;
+    // Fetch the harmony voice from harmonyVoices
+    auto harmonyVoice = elt->getIntValue(k_voice, kUndefinedVoice); // S_harmony doesn't really have k_voice!!! but hey..
+    // Check if there are entries for `currMeasure`
+    std::string currMeasure = fCurrentMeasure->getAttributeValue("number");
+    auto range = harmonyVoices.equal_range(currMeasure);
+    if (range.first != range.second) {
+        for (auto it = range.first; it != range.second; ) {
+            // `it->second` is the std::map<rational, int>
+            for (auto o = it->second.begin(); o != it->second.end(); ) {
+                // `o->first` is the rational time, `o->second` is the voice number
+                if (o->first == fCurrentVoicePosition) {
+                    harmonyVoice = o->second;
+                    o = it->second.erase(o); // Erase from the map and update iterator
+                    break;
+                } else {
+                    ++o; // Move to the next element
+                }
+            }
+            // If the map becomes empty, erase the current multimap entry
+            if (it->second.empty()) {
+                it = harmonyVoices.erase(it);
+            } else {
+                ++it; // Move to the next multimap entry
+            }
+        }
+    }
+    
+    if (harmonyVoice != fTargetVoice) return;
     
     // Note: Numeral and Function Harmonies are not supported yet in GuidoLib
     if (elt->find(k_function) != elt->end())
@@ -1226,6 +1253,7 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
     auto kindElement = elt->find(k_kind);
     if (kindElement != elt->end()) {
         guido_kind_value = kindElement->getAttributeValue("text");
+        cerr<<" HARMONY0 "<< guido_kind_value<<" ->"<< guido_kind_value <<endl;
         if (guido_kind_value.empty()) {
             // No text! check value itself!!!
             std::string kind = elt->getValue(k_kind);
@@ -1322,6 +1350,7 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
             if (kind == "Tristan") {
                 guido_kind_value = "m7b5";
             }
+            cerr<<" HARMONY "<< kind<<" ->"<< guido_kind_value <<endl;
         }
     }
     
@@ -1381,7 +1410,12 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
             add(tag);
         }
     }
-    
+    /*cerr<<"<<< added Harmony "<<tag<<" offset:"<<offset
+    <<" voice:"<<harmonyVoice
+    <<" targetVoice:"<<fTargetVoice
+    <<" Measure:"<<fMeasNum
+    <<" @"<<fCurrentVoicePosition
+    <<endl;*/
 }
     
     //______________________________________________________________________________
