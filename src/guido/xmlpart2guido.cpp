@@ -1498,12 +1498,15 @@ bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
             ctree<xmlelement>::iterator nextWedge = fCurrentPart->find(k_wedge, nextevent);
             
             if (nextWedge != fCurrentPart->end()) {
-                
                 while ( ( nextWedge->getAttributeIntValue("number", 1) != crescendoNumber)
                        &&
                        (nextWedge->getAttributeValue("type")!="stop") )
                 {
                     nextWedge = fCurrentPart->find(k_wedge, nextevent++);
+                    if (nextWedge == fCurrentPart->end()) {
+                        cerr<<"No wedge closeat measure "<<fMeasNum<<"! Ignoring... " <<endl;
+                        return false;
+                    }
                 }
                 
                 ctree<xmlelement>::iterator wedgeEnd = nextWedge;
@@ -2540,7 +2543,9 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
                 }
                 // Check if no tuplet-stop has been detected and take measures:
                 if (nextnote == fCurrentMeasure->end()) {
+#if DEBUG
                     cerr<<"Tuplet doesn't stop! "<<numberOfEventsInTuplet<<endl;
+#endif
                     fTupletEvents = (int)numberOfEventsInTuplet;
                     fTupletEventCounter = 1;
                 }
