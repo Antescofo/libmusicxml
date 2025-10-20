@@ -927,7 +927,8 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                 parameters << ", dy="<<commonDy<<"hs";
                                 
                                 // Determine horizontal position, if either offset, default-x or relative-x are present.
-                                float default_x = element->getAttributeFloatValue("default-x", 0.);
+                                float default_x = 0.0; //element->getAttributeFloatValue("default-x", 0.);
+                                // NOTE: for "tempo" tag, we should neglect the default-x in musicXML's direction since it is from the beginning of the measure!
                                 float rel_x = element->getAttributeFloatValue("relative-x", 0.);
                                 if ( (fCurrentOffset != 0)||(default_x != 0.0)||(rel_x != 0.0)) {
                                     // For Tempo, we should always search from the BEGINNING of measure (hence position = 0.0)
