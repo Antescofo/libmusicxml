@@ -93,11 +93,11 @@ namespace MusicXML2
     void xmlpart2guido::initialize (Sguidoelement seq, int staff, int guidostaff, int voice,
                                     bool notesonly, rational defaultTimeSign)
     {
-        fCurrentStaff = fTargetStaff = staff;	// the current and target staff
-        fTargetVoice = voice;					// the target voice
-        fNotesOnly = notesonly;					// prevent multiple output for keys, clefs etc...
-        fCurrentTimeSign = defaultTimeSign;		// a default time signature
-        fCurrentStaffIndex = guidostaff;		// the current guido staff index
+        fCurrentStaff = fTargetStaff = staff;    // the current and target staff
+        fTargetVoice = voice;                    // the target voice
+        fNotesOnly = notesonly;                    // prevent multiple output for keys, clefs etc...
+        fCurrentTimeSign = defaultTimeSign;        // a default time signature
+        fCurrentStaffIndex = guidostaff;        // the current guido staff index
         fHasLyrics = false;
         fLyricsManualSpacing = false;
         fTupletOpen = 0;
@@ -464,7 +464,7 @@ void xmlpart2guido::checkOctavaPendingEnd() {
     
     //______________________________________________________________________________
     void xmlpart2guido::visitStart ( S_backup& elt )    {
-        stackClean();	// closes pending chords, cue and grace
+        stackClean();    // closes pending chords, cue and grace
         int duration = elt->getIntValue(k_duration, 0);
         if (duration) {
             // backup is supposed to be used only for moving between voices
@@ -482,7 +482,7 @@ void xmlpart2guido::checkOctavaPendingEnd() {
         moveMeasureTime(duration, scanElement);
         if (!scanElement) return;
         
-        stackClean();	// closes pending chords, cue and grace
+        stackClean();    // closes pending chords, cue and grace
         
         if (duration) {
             rational r(duration, fCurrentDivision*4);
@@ -632,7 +632,7 @@ void xmlpart2guido::checkOctavaPendingEnd() {
     //______________________________________________________________________________
     void xmlpart2guido::visitEnd ( S_measure& elt )
     {
-        stackClean();	// closes pending chords, cue and grace
+        stackClean();    // closes pending chords, cue and grace
         checkWedgeStop(); // Closes pending Wedge that should close on "next" event but not when just before measure ending.
         checkVoiceTime (fCurrentMeasureLength, fCurrentVoicePosition);
         
@@ -1709,7 +1709,7 @@ std::string xmlpart2guido::parseMetronome ( metronomevisitor &mv )
             else if ((attribute = elt->getAttribute("fine"))) {
                 tag = guidotag::create("fine");
             }
-            //		if (tag) tag->add(guidoparam::create("id="+attribute->getValue(), false));
+            //        if (tag) tag->add(guidoparam::create("id="+attribute->getValue(), false));
         }
         if (tag) add (tag);
     }
@@ -1788,7 +1788,7 @@ std::string xmlpart2guido::parseMetronome ( metronomevisitor &mv )
                 for (unsigned int i = 0; i < timesignvisitor::fTimeSign.size(); i++) {
                     s << sep << timesignvisitor::fTimeSign[i].first << "/" << timesignvisitor::fTimeSign[i].second;
                     sep = "+";
-                    //				rational ts = timesignvisitor::timesign(i);
+                    //                rational ts = timesignvisitor::timesign(i);
                     fCurrentTimeSign += timesignvisitor::timesign(i);
                 }
                 s >> timesign;
@@ -1834,13 +1834,13 @@ std::string xmlpart2guido::parseMetronome ( metronomevisitor &mv )
             int staffnum = iter->getAttributeIntValue("number", 1);
             
             stringstream s;
-            if ( clefsign == "G")			s << "g";
-            else if ( clefsign == "F")	s << "f";
-            else if ( clefsign == "C")	s << "c";
-            else if ( clefsign == "percussion")	s << "perc";
-            else if ( clefsign == "TAB")	s << "TAB";
-            else if ( clefsign == "none")	s << "none";
-            else {													// unknown clef sign !!
+            if ( clefsign == "G")            s << "g";
+            else if ( clefsign == "F")    s << "f";
+            else if ( clefsign == "C")    s << "c";
+            else if ( clefsign == "percussion")    s << "perc";
+            else if ( clefsign == "TAB")    s << "TAB";
+            else if ( clefsign == "none")    s << "none";
+            else {                                                    // unknown clef sign !!
                 cerr << "warning: unknown clef sign \"" << clefsign << "\"" << endl;
                 return;
             }
@@ -2499,7 +2499,7 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
                 /// Browse through all elements of Tuplet until "stop"!
                 ctree<xmlelement>::iterator nextnote = find(fCurrentMeasure->begin(), fCurrentMeasure->end(), elt);
                 if (nextnote != fCurrentMeasure->end()) {
-                    nextnote++;	// advance one step
+                    nextnote++;    // advance one step
                 }
                 useDispNoteAttribute = true; // setback to True.. will become false if check doesn't pass!
                 while (nextnote != fCurrentMeasure->end()) {
@@ -2681,7 +2681,7 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
 
     // ------------------- LYRICS Functions
     
-    void xmlpart2guido::checkLyricBegin	 ( const std::vector<S_lyric>& lyrics )
+    void xmlpart2guido::checkLyricBegin     ( const std::vector<S_lyric>& lyrics )
     {
         if (notevisitor::getSyllabic()== "single")
         {
@@ -2763,7 +2763,7 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
         }
     }
     
-    void xmlpart2guido::checkLyricEnd	 ( const std::vector<S_lyric>& lyrics )
+    void xmlpart2guido::checkLyricEnd     ( const std::vector<S_lyric>& lyrics )
     {
         float minDur4Space = 1;
         size_t minStringSize4Space = 2;
@@ -2944,7 +2944,7 @@ void xmlpart2guido::checkPostArticulation ( const notevisitor& note )
 }
     
     //---------------------
-    void xmlpart2guido::checkWavyTrillBegin	 ( const notevisitor& nv )
+    void xmlpart2guido::checkWavyTrillBegin     ( const notevisitor& nv )
     {
         if (nv.fTrill)
         {
@@ -2998,7 +2998,7 @@ void xmlpart2guido::checkPostArticulation ( const notevisitor& note )
         }
     }
     
-    void xmlpart2guido::checkWavyTrillEnd	 ( const notevisitor& nv )
+    void xmlpart2guido::checkWavyTrillEnd     ( const notevisitor& nv )
     {
         Sguidoelement tag;
         tag = guidotag::create("trillEnd");
@@ -3217,11 +3217,11 @@ void xmlpart2guido::checkPostArticulation ( const notevisitor& note )
         deque<notevisitor> notevisitors;
         
         ctree<xmlelement>::iterator nextnote = find(fCurrentMeasure->begin(), fCurrentMeasure->end(), elt);
-        if (nextnote != fCurrentMeasure->end()) nextnote++;	// advance one step
+        if (nextnote != fCurrentMeasure->end()) nextnote++;    // advance one step
         while (nextnote != fCurrentMeasure->end()) {
             // looking for the next note on the target voice
             if ((nextnote->getType() == k_note) && (nextnote->getIntValue(k_voice,0) == fTargetVoice)) {
-                ctree<xmlelement>::iterator iter;			// and when there is one
+                ctree<xmlelement>::iterator iter;            // and when there is one
                 iter = nextnote->find(k_chord);
                 if (iter != nextnote->end()) {
                     notevisitor nv;
@@ -3354,7 +3354,7 @@ void xmlpart2guido::checkPostArticulation ( const notevisitor& note )
         if (fInGrace)
         {
             ctree<xmlelement>::iterator nextnote = find(fCurrentMeasure->begin(), fCurrentMeasure->end(), nv.getSnote());
-            nextnote++;	// advance one step
+            nextnote++;    // advance one step
             while (nextnote != fCurrentMeasure->end()) {
                 if ((nextnote->getType() == k_note) && (nextnote->getIntValue(k_voice,0) == fTargetVoice)){
                     ctree<xmlelement>::iterator iter = nextnote->find(k_grace);
@@ -3497,13 +3497,13 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
                 stringstream s;
                 float default_y = (float)(f->getAttributeIntValue("default-y", 0));
                 if (default_y != 0) {
-                    // Fingering default-y is from the top line of staff. In Guido, it is relative to note head
-                    float posy = (default_y / 10) * 2;  // convert to half space
-                    addPosYforNoteHead(nv, posy, tag, 0.0 );
-                }else {
+                    // MusicXML default-y is from top staff line; choose the right origin (staff vs notehead)
+                    // to avoid inverted vertical offsets on notes above the staff (MuseScore export case).
+                    addDyFromNoteOrStaff(nv, f, tag);
+                } else {
                     std::string placement = f->getAttributeValue("placement");
                     if (placement.size() > 0) {
-                        s << "position=\""<<placement<<"\", ";
+                        s << "position=\"" << placement << "\", ";
                     }
                 }
                 
@@ -3522,7 +3522,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
             }
         }
         
-        int octave = nv.getOctave() - 3;			// octave offset between MusicXML and GUIDO is -3
+        int octave = nv.getOctave() - 3;            // octave offset between MusicXML and GUIDO is -3
         if (fShouldStopOctava) {
             octave -= fCurrentOctavaShift;
         }
@@ -3607,7 +3607,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         
     }
     
-    bool xmlpart2guido::checkNoteFormat	 ( const notevisitor& nv , rational posInMeasure, bool withDx)
+    bool xmlpart2guido::checkNoteFormat     ( const notevisitor& nv , rational posInMeasure, bool withDx)
     {
         bool noteFormat = false;
         
@@ -3648,7 +3648,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         return noteFormat;
     }
     
-    int xmlpart2guido::checkRestFormat	 ( const notevisitor& nv, rational posInMeasure )
+    int xmlpart2guido::checkRestFormat     ( const notevisitor& nv, rational posInMeasure )
     {
         if (nv.getStep().size())
         {
