@@ -3496,26 +3496,32 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
                 Sguidoelement tag = guidotag::create("fingering");
                 stringstream s;
                 float default_y = (float)(f->getAttributeIntValue("default-y", 0));
+                std::string placement = f->getAttributeValue("placement");
+                // helper: convert relative-y (tenths) to half-spaces
+                auto relYhs = [](Sxmlelement elt) -> float {
+                    float ry = elt->getAttributeFloatValue("relative-y", 0.0f);
+                    return (ry != 0.0f) ? (ry/10.0f)*2.0f : 0.0f;
+                };
                 if (default_y != 0) {
-                    // MusicXML default-y is from top staff line; choose the right origin (staff vs notehead)
-                    // to avoid inverted vertical offsets on notes above the staff (MuseScore export case).
-                    addDyFromNoteOrStaff(nv, f, tag);
+                    if (!placement.empty()) {
+                        // Finale-style: placement present; keep notehead-relative behavior and add any relative-y
+                        addPosYforNoteHead(nv, f, tag, relYhs(f));
+                    } else {
+                        // MuseScore-style: often no placement → interpret absolute from staff top to avoid inversion
+                        addDyFromNoteOrStaff(nv, f, tag);
+                    }
                 } else {
-                    std::string placement = f->getAttributeValue("placement");
-                    if (placement.size() > 0) {
+                    if (!placement.empty()) {
                         s << "position=\"" << placement << "\", ";
                     }
                 }
-                
                 float default_x = f->getAttributeFloatValue("default-x", 0);
                 float dx = (default_x/10)*2;
                 if (dx != 0 && (default_x<20.0)) { // filter values > 20.0 as they might be erroneous offsets from FINALE!
                     s << "dx="<<dx<<", ";
                 }
-                
                 std::string fingeringText = f->getValue();
                 s << "text=\"" << fingeringText << "\"";
-                
                 tag->add (guidoparam::create(s.str(), false));
                 push(tag);
                 hasFingerings++;
@@ -3737,7 +3743,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
     {
         notevisitor::visitEnd ( elt );
         
-        if (inChord()) return;					// chord notes have already been handled
+        if (inChord()) return;                    // chord notes have already been handled
         
         isProcessingChord = false;
 
