@@ -30,6 +30,90 @@ using namespace std;
 
 bool checkTempoMarkup(std::string input);
 
+// Replace XML entities with their character equivalents and normalize NBSP to space
+namespace {
+    void replaceAll(std::string& s, const std::string& from, const std::string& to) {
+        if (from.empty()) return;
+        size_t pos = 0;
+        while ((pos = s.find(from, pos)) != std::string::npos) {
+            s.replace(pos, from.length(), to);
+            pos += to.length();
+        }
+    }
+
+    void appendCodepoint(std::string& out, long cp) {
+        if (cp <= 0x7F) {
+            out.push_back(static_cast<char>(cp));
+        } else if (cp <= 0x7FF) {
+            out.push_back(static_cast<char>(0xC0 | ((cp >> 6) & 0x1F)));
+            out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+        } else if (cp <= 0xFFFF) {
+            out.push_back(static_cast<char>(0xE0 | ((cp >> 12) & 0x0F)));
+            out.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
+            out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+        } else if (cp <= 0x10FFFF) {
+            out.push_back(static_cast<char>(0xF0 | ((cp >> 18) & 0x07)));
+            out.push_back(static_cast<char>(0x80 | ((cp >> 12) & 0x3F)));
+            out.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
+            out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+        }
+    }
+
+    std::string decodeEntities(const std::string& input) {
+        std::string s;
+        s.reserve(input.size());
+
+        // Normalize NBSP (0xA0) and UTF-8 NBSP (0xC2 0xA0) to space
+        for (size_t i = 0; i < input.size();) {
+            unsigned char c = static_cast<unsigned char>(input[i]);
+            if ((c == 0xC2) && (i + 1 < input.size())
+                && static_cast<unsigned char>(input[i + 1]) == 0xA0) {
+                s.push_back(' ');
+                i += 2;
+                continue;
+            }
+            if (c == 0xA0) {
+                s.push_back(' ');
+                ++i;
+                continue;
+            }
+            s.push_back(input[i]);
+            ++i;
+        }
+
+        replaceAll(s, "&nbsp;", " ");
+        replaceAll(s, "&NonBreakingSpace;", " ");
+        replaceAll(s, "&quot;", "\"");
+        replaceAll(s, "&apos;", "'");
+        replaceAll(s, "&amp;", "&");
+        replaceAll(s, "&lt;", "<");
+        replaceAll(s, "&gt;", ">");
+
+        size_t pos = 0;
+        while ((pos = s.find("&#", pos)) != std::string::npos) {
+            size_t end = s.find(';', pos + 2);
+            if (end == std::string::npos) break;
+            std::string body = s.substr(pos + 2, end - pos - 2);
+            int base = 10;
+            if (!body.empty() && (body[0] == 'x' || body[0] == 'X')) {
+                base = 16;
+                body = body.substr(1);
+            }
+            try {
+                long cp = std::stol(body, nullptr, base);
+                std::string repl;
+                appendCodepoint(repl, cp);
+                s.replace(pos, end - pos + 1, repl);
+                pos += repl.size();
+            } catch (...) {
+                pos = end + 1;
+            }
+        }
+
+        return s;
+    }
+}
+
 namespace MusicXML2
 {
     
@@ -866,12 +950,14 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                 && (element->getAttributeFloatValue("font-size", 0.0) >= 12.0) ) {
                                 generateTempo = true;
                             }
+
+                            std::string decodedWords = decodeEntities(element->getValue());
                             
                             std::stringstream wordParameters;
                             std::stringstream parameters;
                             
                             if (generateTempo) {
-                                tempoWording += element->getValue();
+                                tempoWording += decodedWords;
                             }
                             
                             string wordPrefix="";
@@ -945,7 +1031,7 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                 break;
                             }
                             
-                            string words = element->getValue();
+                            string words = decodedWords;
                             words = std::regex_replace(words, std::regex("\""), "\\\"");
 
                             wordParameters << wordPrefix <<"\"" << words << "\""<< parameters.str();
@@ -1003,7 +1089,7 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                 if ((*iter2)->getType() != k_other_dynamics) {
                                     itensity_type = (*iter2)->getName();
                                 } else {
-                                    itensity_type = (*iter2)->getValue();
+                                    itensity_type = decodeEntities((*iter2)->getValue());
                                 }
                                 tag = guidotag::create("intens");
                                 tag->add (guidoparam::create(itensity_type));
@@ -1099,7 +1185,7 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                             
                         case k_rehearsal:
                         {
-                            string rehearsalValue = element->getValue();
+                            string rehearsalValue = decodeEntities(element->getValue());
                             rehearsalValue = std::regex_replace(rehearsalValue, std::regex("\""), "\\\"");
                             rehearsalValue = "\""+rehearsalValue+"\"";
                             
