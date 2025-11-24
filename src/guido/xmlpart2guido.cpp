@@ -54,6 +54,7 @@ namespace MusicXML2
         fTupletEvents = -1;
         fTupletEventCounter = 0;
         fTremoloInProgress = false;
+        fTremoloOpen = false;
         fCurrentOctavaShift = 0;
         fShouldStopOctava = false;
         staffClefMap.clear();
@@ -80,6 +81,7 @@ namespace MusicXML2
         fTupletEventCounter = 0;
         fTupletOpen = 0;
         fTremoloInProgress = false;
+        fTremoloOpen = false;
         fCurrentOctavaShift = 0;
         fShouldStopOctava = false;
         fCurrentScorePosition.set(0, 1);
@@ -104,6 +106,7 @@ namespace MusicXML2
         fTupletEvents = -1;
         fTupletEventCounter = 0;
         fTremoloInProgress = false;
+        fTremoloOpen = false;
         fCurrentOctavaShift = 0;
         fShouldStopOctava = false;
         start (seq);
@@ -3199,10 +3202,15 @@ void xmlpart2guido::checkPostArticulation ( const notevisitor& note )
                     // Only add tag if the Stop has been correctly detected
                     if (s.str().size()) {
                         tag->add (guidoparam::create(s.str(), false));
+                        fTremoloOpen = true;
                         
                         push(tag);
-                        // return 0 so that this tag wouldn't be closed by pending Pops. Double-note tremolos are closed using fTremoloInProgress
-                        return 0;
+                        // Close the trem tag with the current note; stop notes are still consumed via fTremoloInProgress
+                        return 1;
+                    }
+                    else {
+                        fTremoloInProgress = false;
+                        fTremoloOpen = false;
                     }
                     
                 }
@@ -3767,10 +3775,14 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         
         checkOctavaBegin(eventStartPosition);
 
+        const bool tremoloStartNote = (fTremolo && (fTremolo->getAttributeValue("type")=="start"));
                         
         if ((fTremoloInProgress)&&(fTremolo && (fTremolo->getAttributeValue("type")=="stop"))) {
             fTremoloInProgress = false;
-            pop();
+            if (fTremoloOpen) {
+                pop();
+                fTremoloOpen = false;
+            }
             if (!isGrace() ) {
                 moveMeasureTime (getDuration(), scanVoice);
             }
@@ -3804,7 +3816,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         int chordOrnaments = checkChordOrnaments(*this);
         pendingPops += chordOrnaments;
         
-        pendingPops += checkTremolo(*this, elt);   // non-measured tremolos will be popped upon "stop" and not counted here
+        pendingPops += checkTremolo(*this, elt);   // double-note tremolos keep skipping the stop note but close with pending pops
         
         if (notevisitor::getType()==kRest) {
             pendingPops += checkRestFormat(*this, fCurrentVoicePosition);
@@ -3852,6 +3864,9 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         isProcessingChord = false;
         
         while (pendingPops--) pop();
+        if (tremoloStartNote) {
+            fTremoloOpen = false;
+        }
         
         checkWavyTrillEnd(*this);
         checkLyricEnd (notevisitor::getLyric());
