@@ -63,22 +63,40 @@ namespace {
         std::string s;
         s.reserve(input.size());
 
-        // Normalize NBSP (0xA0) and UTF-8 NBSP (0xC2 0xA0) to space
+        // Normalize NBSP (0x00A0) while keeping UTF-8 sequences intact
+        size_t remainingUtf8Bytes = 0;
         for (size_t i = 0; i < input.size();) {
             unsigned char c = static_cast<unsigned char>(input[i]);
+
+            // Explicit check for UTF-8 NBSP sequence (0xC2 0xA0)
             if ((c == 0xC2) && (i + 1 < input.size())
                 && static_cast<unsigned char>(input[i + 1]) == 0xA0) {
                 s.push_back(' ');
                 i += 2;
+                remainingUtf8Bytes = 0;
                 continue;
             }
-            if (c == 0xA0) {
+
+            // Single-byte A0 only when we're not inside a multibyte sequence
+            if ((remainingUtf8Bytes == 0) && (c == 0xA0)) {
                 s.push_back(' ');
                 ++i;
                 continue;
             }
-            s.push_back(input[i]);
+
+            s.push_back(static_cast<char>(c));
             ++i;
+
+            // Track multibyte UTF-8 sequences so continuation bytes are not treated as stand‑alone
+            if (remainingUtf8Bytes > 0) {
+                --remainingUtf8Bytes;
+            } else if ((c & 0xE0) == 0xC0) {
+                remainingUtf8Bytes = 1;
+            } else if ((c & 0xF0) == 0xE0) {
+                remainingUtf8Bytes = 2;
+            } else if ((c & 0xF8) == 0xF0) {
+                remainingUtf8Bytes = 3;
+            }
         }
 
         replaceAll(s, "&nbsp;", " ");
