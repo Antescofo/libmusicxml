@@ -142,6 +142,9 @@ public visitor<S_attributes>         // to get clef, division, staves, time and 
     void moveMeasureTime (long duration, bool moveVoiceToo=false);
     void reset ();
     void stackClean	();
+
+    /// Current absolute staff position inside the measure (shared among voices on the staff)
+    rational currentStaffPosition() const;
     
     int  checkArticulation ( const notevisitor& note );			// returns the count of articulations pushed on the stack
     void checkPostArticulation ( const notevisitor& note );      /// Articulations that should be generated in ADD mode after note creation

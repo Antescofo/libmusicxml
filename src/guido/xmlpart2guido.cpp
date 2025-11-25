@@ -415,7 +415,7 @@ void xmlpart2guido::makeFirstPartialMeasure() {
             }
                 
             // Add last clef
-            std::string lastClef = getClef(fTargetStaff , fCurrentVoicePosition, fMeasNum);
+            std::string lastClef = getClef(fTargetStaff , currentStaffPosition(), fMeasNum);
             if (!lastClef.empty()) {
                 Sguidoelement tag = guidotag::create("clef");
                 tag->add (guidoparam::create(lastClef));
@@ -438,6 +438,14 @@ void xmlpart2guido::makeFirstPartialMeasure() {
             fCurrentVoicePosition += r;
             fCurrentVoicePosition.rationalise();
         }
+    }
+
+    rational xmlpart2guido::currentStaffPosition() const {
+        // Use the absolute staff position in the current measure so all voices
+        // see the same time reference (backups/forwards adjust fCurrentMeasurePosition).
+        rational pos = fCurrentMeasurePosition;
+        pos.rationalise();
+        return pos;
     }
 
 void xmlpart2guido::checkOctavaBegin(rational position) {
@@ -1962,7 +1970,7 @@ std::string xmlpart2guido::parseMetronome ( metronomevisitor &mv )
                 param += "-8";
             
             // staffClefMap: multimap containing <staff-num, measureNum, position, clef type>
-            std::pair<rational, std::string> positionClef = std::pair<rational, std::string>(fCurrentVoicePosition ,param);
+            std::pair<rational, std::string> positionClef = std::pair<rational, std::string>(currentStaffPosition() ,param);
             staffClefMap.insert(std::pair<int, std::pair < int , std::pair<rational, std::string> > >(staffnum, std::pair< int, std::pair< rational, std::string > >(fMeasNum, positionClef) ) );
             //cerr<<"\t\t<<< staffClefMap adding "<<param<<" staff:"<<staffnum <<" pos: ";fCurrentVoicePosition.print(cerr);cerr<<" size="<<staffClefMap.size()<<endl;
             
@@ -3771,7 +3779,7 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
         if (nv.getStep().size())
         {
             // Check out clef for position and voice
-            std::string thisClef = getClef(fTargetStaff , fCurrentVoicePosition, fMeasNum);
+            std::string thisClef = getClef(fTargetStaff , currentStaffPosition(), fMeasNum);
             if (thisClef.empty()) {
                 return 0;
             }
@@ -4088,7 +4096,7 @@ void xmlpart2guido::addPosYforNoteHead(const notevisitor& nv, float xmlY, Sguido
 }
 
 float xmlpart2guido::distanceFromStaffTopForNote(const notevisitor& nv) {
-    std::string thisClef = getClef(fTargetStaff , fCurrentVoicePosition, fMeasNum);
+    std::string thisClef = getClef(fTargetStaff , currentStaffPosition(), fMeasNum);
     if (thisClef.empty()) {
         thisClef = "g";
     }
@@ -4108,7 +4116,7 @@ float xmlpart2guido::distanceFromStaffTopForNote(const notevisitor& nv) {
 
 
 float xmlpart2guido::getNoteDistanceFromStaffTop(const notevisitor& nv) {
-    std::string thisClef = getClef(fTargetStaff , fCurrentVoicePosition, fMeasNum);
+    std::string thisClef = getClef(fTargetStaff , currentStaffPosition(), fMeasNum);
     if (thisClef.empty()) {
         thisClef = "g";
     }
