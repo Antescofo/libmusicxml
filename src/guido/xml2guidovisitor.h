@@ -212,6 +212,9 @@ public:
     
     /// Returne the number of parts in this XML Score
     int getPartsAvailable();
+
+    bool isMuseScoreSource() const;
+    const std::string& getSoftware() const;
     
 };
 

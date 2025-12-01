@@ -134,6 +134,7 @@ namespace {
 
 namespace MusicXML2
 {
+    bool xmlpart2guido::sIsMuseScore = false;
     
     //______________________________________________________________________________
     xmlpart2guido::xmlpart2guido(bool generateComments, bool generateStem, bool generateBar,
@@ -163,6 +164,11 @@ namespace MusicXML2
         fPreviousPedalYPos = 0.0;
         isFirstPartialMeasureDone = (fStartMeasure == 0) && (fBeginMeasureBeatOffset== 0.0);
         fMeasureHasTremolo = false;
+    }
+    
+    void xmlpart2guido::setMuseScoreSource(bool state)
+    {
+        sIsMuseScore = state;
     }
     
     //______________________________________________________________________________
@@ -3633,6 +3639,9 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
                 } else {
                     if (!placement.empty()) {
                         s << "position=\"" << placement << "\", ";
+                    } else if (sIsMuseScore) {
+                        // MuseScore omits placement for fingerings; default to above to match its output
+                        s << "position=\"" << "above" << "\", ";
                     }
                 }
                 float default_x = f->getAttributeFloatValue("default-x", 0);

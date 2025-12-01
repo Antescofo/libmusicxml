@@ -17,6 +17,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <algorithm>
+#include <cctype>
 
 #include "partsummary.h"
 #include "rational.h"
@@ -32,6 +34,44 @@ namespace MusicXML2
 {
     int xml2guidovisitor::defaultStaffDistance = 0;
     
+    namespace {
+        thread_local std::string gSoftware;
+        thread_local bool gIsMuseScore = false;
+
+        void resetSoftwareInfo()
+        {
+            gSoftware.clear();
+            gIsMuseScore = false;
+        }
+
+        void detectSoftware(const Sxmlelement& xml)
+        {
+            if (!xml) return;
+            auto identification = xml->find(k_identification, xml->begin());
+            while (identification != xml->end()) {
+                auto encoding = identification->find(k_encoding, identification->begin());
+                while (encoding != identification->end()) {
+                    auto software = encoding->find(k_software, encoding->begin());
+                    while (software != encoding->end()) {
+                        std::string value = software->getValue();
+                        if (!value.empty() && gSoftware.empty()) {
+                            gSoftware = value;
+                        }
+                        std::string lower = value;
+                        std::transform(lower.begin(), lower.end(), lower.begin(),
+                                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                        if (lower.find("musescore") != std::string::npos) {
+                            gIsMuseScore = true;
+                        }
+                        software = encoding->find(k_software, software++);
+                    }
+                    encoding = identification->find(k_encoding, encoding++);
+                }
+                identification = xml->find(k_identification, identification++);
+            }
+        }
+    }
+    
     //______________________________________________________________________________
     xml2guidovisitor::xml2guidovisitor(bool generateComments, bool generateStem, bool generateBar, int partNum,
                                        int beginMeasure, double beginMeasureOffset,
@@ -44,6 +84,7 @@ namespace MusicXML2
     fTotalMeasures(0), fTotalDuration(0.0)
     {
         fPartsAvailable = 0;
+        resetSoftwareInfo();
     }
     
     //______________________________________________________________________________
@@ -51,6 +92,7 @@ namespace MusicXML2
     {
         Sguidoelement gmn;
         if (xml) {
+            detectSoftware(xml);
             tree_browser<xmlelement> browser(this);
             browser.browse(*xml);
             gmn = current();
@@ -62,6 +104,7 @@ namespace MusicXML2
     {
         if (xml) {
             std::ostringstream oss;
+            detectSoftware(xml);
             tree_browser<xmlelement> browser(this);
             browser.browse(*xml);
             Sguidoelement gmn = current();
@@ -346,6 +389,7 @@ namespace MusicXML2
             xmlpart2guido pv(fGenerateComments, fGenerateStem, fGenerateBars,
                              fBeginMeasure, fBeginMeasureBeatOffset,
                              fEndMeasure, fEndMeasureOffset, fEndMeasureBeatOffset);
+            pv.setMuseScoreSource(gIsMuseScore);
             pv.generatePositions (fGeneratePositions);
             xml_tree_browser browser(&pv);
             pv.initialize(seq, targetStaff, fCurrentStaffIndex, targetVoice, notesOnly, currentTimeSign);
@@ -870,5 +914,7 @@ double xml2guidovisitor::getTotalDuration() {
 int xml2guidovisitor::getPartsAvailable() {
     return fPartsAvailable;
 }
-}
 
+bool xml2guidovisitor::isMuseScoreSource() const { return gIsMuseScore; }
+const std::string& xml2guidovisitor::getSoftware() const { return gSoftware; }
+}
