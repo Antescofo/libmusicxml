@@ -1047,6 +1047,9 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                 if (tempoDy > commonDy) {
                                     commonDy = tempoDy;
                                 }
+                                if (sIsMuseScore) {
+                                    commonDy += xml2guidovisitor::getYposition(element, 4.0, true);
+                                }
                                 parameters << ", dy="<<commonDy<<"hs";
                                 
                                 // Determine horizontal position, if either offset, default-x or relative-x are present.
@@ -1072,9 +1075,15 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                             
                             /// Take into account group positioning
                             float posy = xml2guidovisitor::getYposition(element, 0, true);
-                            if (posy != 0.0) {
-                                // then apply and save
-                                commonDy += xml2guidovisitor::getYposition(element, 11.0, true);  // Should this be additive?
+                            if (!directionPlacement.empty()) {
+                                if (directionPlacement == "above") {
+                                    commonDy += xml2guidovisitor::getYposition(element, 13.0, true);
+                                }
+                            } else {
+                                if (posy != 0.0) {
+                                    // then apply and save
+                                    commonDy += xml2guidovisitor::getYposition(element, 13.0, true);  // Should this be additive?
+                                }
                             }
                             
                             if (generateCompositeDynamic) {
@@ -1196,7 +1205,10 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                             float posy = xml2guidovisitor::getYposition(element, 0, true);
                             if (posy != 0.0) {
                                 // then apply and save
-                                commonDy += xml2guidovisitor::getYposition(element, -4.0, true);  // Should this be additive?
+                                commonDy += xml2guidovisitor::getYposition(element, -4.0, true);
+                            }
+                            if (sIsMuseScore) {
+                                commonDy += xml2guidovisitor::getYposition(element, 4.0, true);
                             }
                                                                                     
                             // apply inherited Y-position
@@ -1474,7 +1486,7 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
             if (kind == "Tristan") {
                 guido_kind_value = "m7b5";
             }
-            cerr<<" HARMONY "<< kind<<" ->"<< guido_kind_value <<endl;
+            //cerr<<" HARMONY "<< kind<<" ->"<< guido_kind_value <<endl;
         }
     }
     
