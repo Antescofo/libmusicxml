@@ -1410,7 +1410,7 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
     auto kindElement = elt->find(k_kind);
     if (kindElement != elt->end()) {
         guido_kind_value = kindElement->getAttributeValue("text");
-        cerr<<" HARMONY0 "<< guido_kind_value<<" ->"<< guido_kind_value <<endl;
+        //cerr<<" HARMONY0 "<< guido_kind_value<<" ->"<< guido_kind_value <<endl;
         if (guido_kind_value.empty()) {
             // No text! check value itself!!!
             std::string kind = elt->getValue(k_kind);
@@ -1543,7 +1543,11 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
     tag->add(guidoparam::create(harmonyText, true));
     tag->add(guidoparam::create("position=\"above\"", false));
     
-    xml2guidovisitor::addPosY(elt, tag, -6, 1);
+    if (sIsMuseScore) {
+        // Do not add posY!
+    } else {
+        xml2guidovisitor::addPosY(elt, tag, -6, 1);
+    }
 
     int offset = elt->getIntValue(k_offset, 0);
     if (offset == 0) {
