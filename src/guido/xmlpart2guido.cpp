@@ -877,6 +877,8 @@ void xmlpart2guido::checkOctavaPendingEnd() {
         
         auto branches = elt->elements();
         
+        std::string directionPlacement = elt->getAttributeValue("placement");
+        
         bool directionProcessed = true;
         
         for (iter = elt->lbegin(); iter != elt->lend(); iter++) {
@@ -1259,7 +1261,7 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                             
                         case k_wedge:
                         {
-                            directionProcessed = parseWedge(element, directionStaff);
+                            directionProcessed = parseWedge(element, directionStaff, directionPlacement);
                         }
                         break;
                             
@@ -1565,7 +1567,7 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
         add(tag);
     }
     
-bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
+bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff, std::string directionPlacement)
 {
     if (elt->getType() != k_wedge) {
         return false;
@@ -1626,7 +1628,7 @@ bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
                 {
                     nextWedge = fCurrentPart->find(k_wedge, nextevent++);
                     if (nextWedge == fCurrentPart->end()) {
-                        cerr<<"No wedge closeat measure "<<fMeasNum<<"! Ignoring... " <<endl;
+                        cerr<<"No wedge close at measure "<<fMeasNum<<"! Ignoring... " <<endl;
                         return false;
                     }
                 }
@@ -1692,7 +1694,10 @@ bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff)
             
             // add dy and dx1
             stringstream s;
-            s << "dy=" << xml2guidovisitor::getYposition(elt, 13, true) << "hs";
+            // The "13" offset holds if the parent "direction" has no placement or placement "above".
+            // If should be zero for placement "below"
+            int dyOffset = directionPlacement == "below" ? 0 : 13;
+            s << "dy=" << xml2guidovisitor::getYposition(elt, dyOffset, true) << "hs";
             
             rational offset(fCurrentOffset, fCurrentDivision*4);
             float wedgeDx = timePositions.getDxForElement(elt, fCurrentVoicePosition.toDouble(),
