@@ -230,7 +230,7 @@ protected:
 
     std::string parseMetronome ( metronomevisitor &mv );
     
-    bool parseWedge(MusicXML2::xmlelement *elt, int staff);
+    bool parseWedge(MusicXML2::xmlelement *elt, int staff, std::string directionPlacement);
     
     /// creates an Octave Shift for Guido.
     /// @param type 0 for stop, 8 for one-octave above, -8 for 1-oct below, 15 for two oct above, etc.
