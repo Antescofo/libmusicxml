@@ -1712,7 +1712,10 @@ bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff, std::strin
             stringstream s;
             // The "13" offset holds if the parent "direction" has no placement or placement "above".
             // If should be zero for placement "below"
-            int dyOffset = directionPlacement == "below" ? 0 : 13;
+            int dyOffset = 13;
+            if (sIsMuseScore) {
+                dyOffset = directionPlacement == "below" ? 0 : 13;
+            }
             s << "dy=" << xml2guidovisitor::getYposition(elt, dyOffset, true) << "hs";
             
             rational offset(fCurrentOffset, fCurrentDivision*4);
