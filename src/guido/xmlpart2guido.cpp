@@ -16,6 +16,7 @@
 #include <string>
 #include <cmath>
 #include <regex>
+#include <iomanip>
 
 
 #include "conversions.h"
@@ -59,8 +60,11 @@ namespace {
         }
     }
 
-    std::string durationDxParam(const rational& offset, const std::string& name = "dx") {
-        return name + "=" + offset.toString();
+    std::string durationDxParam(rational offset, const std::string& name = "dx") {
+        offset.rationalise(); // reduce the fraction before emitting
+        std::ostringstream s;
+        s << std::setprecision(8) << std::fixed << offset.toDouble();
+        return name + "=" + s.str() + "dur";
     }
 
     std::string decodeEntities(const std::string& input) {
