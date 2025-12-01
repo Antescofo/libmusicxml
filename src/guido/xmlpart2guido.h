@@ -256,6 +256,8 @@ public:
                   int endMeasure = 0, int endMeasureOffset = 0, double endMeasureBeatoffset = 0);
     virtual ~xmlpart2guido() {}
     
+    void setMuseScoreSource(bool state);
+
     Sguidoelement& current ()					{ return fStack.top(); }
     void	initialize (Sguidoelement seq, int staff, int guidostaff, int voice, bool notesonly, rational defaultTimeSign);
     void	generatePositions (bool state)		{ fGeneratePositions = state; }
@@ -289,6 +291,7 @@ public:
 
 private:
     bool fHasLyrics, fMeasureHasTremolo;
+    static bool sIsMuseScore;
 
     std::string getClef(int staffIndex, rational pos, int measureNum);
     
