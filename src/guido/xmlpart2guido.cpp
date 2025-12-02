@@ -3679,20 +3679,30 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
                     float ry = elt->getAttributeFloatValue("relative-y", 0.0f);
                     return (ry != 0.0f) ? (ry/10.0f)*2.0f : 0.0f;
                 };
-                if (default_y != 0) {
-                    if (!placement.empty()) {
-                        // Finale-style: placement present; keep notehead-relative behavior and add any relative-y
-                        addPosYforNoteHead(nv, f, tag, relYhs(f));
-                    } else {
-                        // MuseScore-style: often no placement → interpret absolute from staff top to avoid inversion
-                        addDyFromNoteOrStaff(nv, f, tag);
-                    }
-                } else {
+                if (sIsMuseScore) {
                     if (!placement.empty()) {
                         s << "position=\"" << placement << "\", ";
-                    } else if (sIsMuseScore) {
-                        // MuseScore omits placement for fingerings; default to above to match its output
-                        s << "position=\"" << "above" << "\", ";
+                    } else {
+                        if (default_y != 0) {
+                            addPosYforNoteHead(nv, f, tag, relYhs(f));
+                        } else {
+                            // MuseScore omits placement for fingerings; default to above to match its output
+                            s << "position=\"" << "above" << "\", ";
+                        }
+                    }
+                } else {
+                    if (default_y != 0) {
+                        if (!placement.empty()) {
+                            // Finale-style: placement present; keep notehead-relative behavior and add any relative-y
+                            addPosYforNoteHead(nv, f, tag, relYhs(f));
+                        } else {
+                            // MuseScore-style: often no placement → interpret absolute from staff top to avoid inversion
+                            addDyFromNoteOrStaff(nv, f, tag);
+                        }
+                    } else {
+                        if (!placement.empty()) {
+                            s << "position=\"" << placement << "\", ";
+                        }
                     }
                 }
                 float default_x = f->getAttributeFloatValue("default-x", 0);
