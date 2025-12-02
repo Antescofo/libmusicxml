@@ -3654,37 +3654,43 @@ void xmlpart2guido::newChord(const deque<notevisitor>& nvs) {
                     float ry = elt->getAttributeFloatValue("relative-y", 0.0f);
                     return (ry != 0.0f) ? (ry/10.0f)*2.0f : 0.0f;
                 };
+                float default_x = f->getAttributeFloatValue("default-x", 0);
+                float dx = (default_x/10)*2;
                 if (sIsMuseScore) {
                     if (!placement.empty()) {
                         s << "position=\"" << placement << "\", ";
                     } else {
                         if (default_y != 0) {
-                            addPosYforNoteHead(nv, f, tag, relYhs(f));
+                            // MuseScore relative-Y is from top of staff
+                            xml2guidovisitor::addPosY(f, tag, 0.0, 1.0);
+                            
                         } else {
                             // MuseScore omits placement for fingerings; default to above to match its output
                             s << "position=\"" << "above" << "\", ";
                         }
                     }
+                    // Filter small values as they might be note-head offsets from MuseScore!
+                    if (fabs(dx)>1.5 && (default_x<20.0)) {
+                        s << "dx="<<dx<<", ";
+                    }
                 } else {
+                    // FINALE or else
                     if (default_y != 0) {
                         if (!placement.empty()) {
                             // Finale-style: placement present; keep notehead-relative behavior and add any relative-y
                             addPosYforNoteHead(nv, f, tag, relYhs(f));
-                        } else {
-                            // MuseScore-style: often no placement → interpret absolute from staff top to avoid inversion
-                            addDyFromNoteOrStaff(nv, f, tag);
                         }
                     } else {
                         if (!placement.empty()) {
                             s << "position=\"" << placement << "\", ";
                         }
                     }
+                    if (dx != 0 && (default_x<20.0)) { // filter values > 20.0 as they might be erroneous offsets from FINALE!
+                        s << "dx="<<dx<<", ";
+                    }
                 }
-                float default_x = f->getAttributeFloatValue("default-x", 0);
-                float dx = (default_x/10)*2;
-                if (dx != 0 && (default_x<20.0)) { // filter values > 20.0 as they might be erroneous offsets from FINALE!
-                    s << "dx="<<dx<<", ";
-                }
+                
+                
                 std::string fingeringText = f->getValue();
                 s << "text=\"" << fingeringText << "\"";
                 tag->add (guidoparam::create(s.str(), false));
