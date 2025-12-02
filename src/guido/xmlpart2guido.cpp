@@ -1372,6 +1372,14 @@ void xmlpart2guido::checkOctavaPendingEnd() {
     }
 
 void xmlpart2guido::visitEnd(S_harmony& elt) {
+    const long offset = elt->getLongValue(k_offset, 0);
+    // Use the actual in-measure position (voice time + offset) to find the owning voice.
+    rational harmonyPosition = fCurrentVoicePosition;
+    if (offset != 0) {
+        harmonyPosition += rational(offset, fCurrentDivision * 4);
+        harmonyPosition.rationalise();
+    }
+
     // Fetch the harmony voice from harmonyVoices
     auto harmonyVoice = elt->getIntValue(k_voice, kUndefinedVoice); // S_harmony doesn't really have k_voice!!! but hey..
     // Check if there are entries for `currMeasure`
@@ -1382,7 +1390,7 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
             // `it->second` is the std::map<rational, int>
             for (auto o = it->second.begin(); o != it->second.end(); ) {
                 // `o->first` is the rational time, `o->second` is the voice number
-                if (o->first == fCurrentVoicePosition) {
+                if (o->first == harmonyPosition) {
                     harmonyVoice = o->second;
                     o = it->second.erase(o); // Erase from the map and update iterator
                     break;
@@ -1567,7 +1575,6 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
         xml2guidovisitor::addPosY(elt, tag, -6, 1);
     }
 
-    int offset = elt->getIntValue(k_offset, 0);
     if (offset == 0) {
         add(tag);
     } else {
@@ -4136,13 +4143,6 @@ void xmlpart2guido::addDyFromNoteOrStaff(const notevisitor& nv, Sxmlelement elt,
         }else {
             xml2guidovisitor::addPosY(elt, tag, 0.0, 1.0);
         }
-        
-//        cerr <<"\t addPosYforNoteHead meas:"<<fMeasNum
-//            <<" note:"<<nv.getStep()<<nv.getOctave()
-//            <<" default_y="<<default_y<<" "<< (default_y / 10) * 2
-//            <<" noteDistanceFromStaffTop="<<noteDistanceFromStaffTop
-//            <<" -> "<<tag
-//        <<endl;
     }
 }
 
