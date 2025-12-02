@@ -906,9 +906,10 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                             std::string pedalType = element->getAttributeValue("type");
                             if ( (pedalType== "start") || (pedalType == "sostenuto")) {
                                 tag = guidotag::create("pedalOn");
-                                fPreviousPedalYPos = xml2guidovisitor::getYposition(element, 14.0, true);
+                                int kOffset = sIsMuseScore ? 0.0 : 14.0;
+                                fPreviousPedalYPos = xml2guidovisitor::getYposition(element, kOffset, true);
                                 
-                                xml2guidovisitor::addPosY(element, tag, 14.0, 1.0);
+                                xml2guidovisitor::addPosY(element, tag, kOffset, 1.0);
                             }else
                                 if ( (pedalType== "stop") || (pedalType == "discontinue")) {
                                     tag = guidotag::create("pedalOff");
@@ -1264,7 +1265,8 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                     s << "dx=" << markDx ;
                                     tag->add (guidoparam::create(s.str(), false));
                                 }
-                                xml2guidovisitor::addPosY(element, tag, -4, 1);
+                                int kOffset = sIsMuseScore ? 0 : -4;
+                                xml2guidovisitor::addPosY(element, tag, kOffset, 1);
                                 
                                 add (tag);
                             }
