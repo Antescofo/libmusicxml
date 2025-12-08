@@ -1265,7 +1265,7 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                     s << "dx=" << markDx ;
                                     tag->add (guidoparam::create(s.str(), false));
                                 }
-                                int kOffset = sIsMuseScore ? 0 : -4;
+                                int kOffset = sIsMuseScore ? 4 : -4;
                                 xml2guidovisitor::addPosY(element, tag, kOffset, 1);
                                 
                                 add (tag);
@@ -1326,6 +1326,10 @@ void xmlpart2guido::checkOctavaPendingEnd() {
     
     /// Closing Guido TEXT tags; to be used once a NOTE/CHORD is embedded.
     void xmlpart2guido::checkTextEnd() {
+        // Avoid closing text while a grace block is open, otherwise the grace tag would be popped instead.
+        if (fInGrace) {
+            return;
+        }
         if (fTextTagOpen>0) {
             while (fTextTagOpen>0) {
                 pop();
