@@ -2884,7 +2884,7 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
         {
             Sguidoelement tag = guidotag::create("lyrics");
             /// replaces Spaces in text by '~' to avoid event progression!
-            std::string newTxt = notevisitor::getLyricText();
+            std::string newTxt = decodeEntities(notevisitor::getLyricText());
             std::replace( newTxt.begin(), newTxt.end(), ' ', '~');
             tag->add (guidoparam::create(newTxt, true));
             
@@ -2922,7 +2922,7 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
         {
             Sguidoelement tag = guidotag::create("lyrics");
             // replaces Spaces in text by '~' to avoid event progression!
-            std::string newTxt = notevisitor::getLyricText();
+            std::string newTxt = decodeEntities(notevisitor::getLyricText());
             std::replace( newTxt.begin(), newTxt.end(), ' ', '~');
             if (!(notevisitor::getSyllabic()== "end"))
             {
@@ -2971,10 +2971,11 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
         {
             pop();
             
-            if ( fLyricsManualSpacing && (thisDuration< minDur4Space) && (notevisitor::getLyricText().size() > minStringSize4Space))
+            std::string decodedText = decodeEntities(notevisitor::getLyricText());
+            if ( fLyricsManualSpacing && (thisDuration< minDur4Space) && (decodedText.size() > minStringSize4Space))
             {
                 Sguidoelement tag = guidotag::create("space");
-                size_t additionalSpace = notevisitor::getLyricText().size() - minStringSize4Space;
+                size_t additionalSpace = decodedText.size() - minStringSize4Space;
                 tag->add (guidoparam::create(8 + additionalSpace, false));
                 add(tag);
             }
@@ -2986,14 +2987,15 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
         {
             pop();
             
-            if ( fLyricsManualSpacing && (thisDuration< minDur4Space) && (notevisitor::getLyricText().size() > minStringSize4Space))
+            std::string decodedText = decodeEntities(notevisitor::getLyricText());
+            if ( fLyricsManualSpacing && (thisDuration< minDur4Space) && (decodedText.size() > minStringSize4Space))
             {
                 Sguidoelement tag = guidotag::create("space");
                 size_t lyricStringSize = 0;
                 if (notevisitor::getSyllabic()=="end")
-                    lyricStringSize = notevisitor::getLyricText().size();
+                    lyricStringSize = decodedText.size();
                 else
-                    lyricStringSize = notevisitor::getLyricText().size() +1;
+                    lyricStringSize = decodedText.size() +1;
                 
                 long additionalSpace =  lyricStringSize - minStringSize4Space;
                 tag->add (guidoparam::create(8 + additionalSpace, false));
