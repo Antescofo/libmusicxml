@@ -906,7 +906,9 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                             std::string pedalType = element->getAttributeValue("type");
                             if ( (pedalType== "start") || (pedalType == "sostenuto")) {
                                 tag = guidotag::create("pedalOn");
-                                int kOffset = sIsMuseScore ? 0.0 : 14.0;
+                                const bool hasDefaultY = !element->getAttributeValue("default-y").empty();
+                                const bool hasRelativeY = !element->getAttributeValue("relative-y").empty();
+                                int kOffset = (sIsMuseScore && !(hasDefaultY || hasRelativeY)) ? 0.0 : 14.0;
                                 fPreviousPedalYPos = xml2guidovisitor::getYposition(element, kOffset, true);
                                 
                                 xml2guidovisitor::addPosY(element, tag, kOffset, 1.0);
@@ -1716,11 +1718,21 @@ bool xmlpart2guido::parseWedge(MusicXML2::xmlelement *elt, int staff, std::strin
             
             // add dy and dx1
             stringstream s;
-            // The "13" offset holds if the parent "direction" has no placement or placement "above".
-            // If should be zero for placement "below"
-            int dyOffset = 13;
-            if (sIsMuseScore) {
-                dyOffset = directionPlacement == "below" ? 0 : 13;
+            // MusicXML default-y/relative-y are measured from the top staff line,
+            // while Guido cresc/dim dy is measured from the bottom staff line.
+            const float kStaffTopToBottomHs = 8.0f; // 4 spaces = 8 half-spaces
+            const float kGuidoDynBaselineHs = 4.0f; // Guido dynamics baseline is ~2 spaces below staff bottom
+            const bool hasDefaultY = !elt->getAttributeValue("default-y").empty();
+            const bool hasRelativeY = !elt->getAttributeValue("relative-y").empty();
+            float dyOffset = 0.0f;
+            if (hasDefaultY || hasRelativeY) {
+                dyOffset = kStaffTopToBottomHs + kGuidoDynBaselineHs;
+            } else {
+                // Heuristic when no explicit Y is provided in XML
+                dyOffset = 13.0f;
+                if (sIsMuseScore) {
+                    dyOffset = directionPlacement == "below" ? 0.0f : 13.0f;
+                }
             }
             s << "dy=" << xml2guidovisitor::getYposition(elt, dyOffset, true) << "hs";
             
