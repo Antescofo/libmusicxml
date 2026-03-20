@@ -1140,6 +1140,12 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                 tag->add (guidoparam::create(itensity_type));
                                 rational offset(fCurrentOffset, fCurrentDivision*4);
                                 float intensDx = timePositions.getDxForElement(element, fCurrentVoicePosition.toDouble(), fCurrentMeasure->getAttributeValue("number"), fTargetVoice, directionStaff, offset.toDouble());
+                                if (sIsMuseScore && (fCurrentOffset == 0)) {
+                                    // MuseScore exports a constant default-x for dynamics that is not note-relative.
+                                    // Preserve only explicit relative-x tweaks and otherwise keep the dynamic
+                                    // attached to its musical time position.
+                                    intensDx = xml2guidovisitor::getXposition(element, 0.0f) - element->getAttributeFloatValue("default-x", 0.0f) / 10.0f * 2.0f;
+                                }
                                 
                                 // add pending word parameters (for "before")
                                 if (!generateAfter) {
@@ -1158,7 +1164,7 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                         stringstream s;
                                         s << "dx=" << dynamicsDx << "hs";
                                         tag->add (guidoparam::create(s.str(), false));
-                                    }else if (intensDx != -999) {
+                                    } else if (intensDx != -999 && intensDx != 0.0f) {
                                         stringstream s;
                                         s << "dx=" << intensDx ;
                                         tag->add (guidoparam::create(s.str(), false));
