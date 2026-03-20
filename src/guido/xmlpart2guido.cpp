@@ -1069,13 +1069,12 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                 parameters << ",fattrib=\""+fattrib+"\"";
                             
                             if (generateTempo) {
-                                // Convert dy to Guido Tempo Tag origin which is +4hs from top of the staff
-                                float tempoDy = xml2guidovisitor::getYposition(element, -4, true);
+                                // MuseScore tempo positions are staff-top relative, while older exports
+                                // were tuned against Guido's historic tempo anchor.
+                                const float tempoYOffset = sIsMuseScore ? 4.0f : -4.0f;
+                                float tempoDy = xml2guidovisitor::getYposition(element, tempoYOffset, true);
                                 if (tempoDy > commonDy) {
                                     commonDy = tempoDy;
-                                }
-                                if (sIsMuseScore) {
-                                    commonDy += xml2guidovisitor::getYposition(element, 4.0, true);
                                 }
                                 parameters << ", dy="<<commonDy<<"hs";
                                 
@@ -1237,21 +1236,21 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                 tag->add (guidoparam::create(tempoParams.str(), false));
                             }
                             
-                            /// Take into account group positioning
-                            float posy = xml2guidovisitor::getYposition(element, 0, true);
-                            if (posy != 0.0) {
-                                // then apply and save
-                                commonDy += xml2guidovisitor::getYposition(element, -4.0, true);
-                            }
-                            if (sIsMuseScore) {
-                                commonDy += xml2guidovisitor::getYposition(element, 4.0, true);
-                            }
-                                                                                    
-                            // apply inherited Y-position
-                            if (commonDy != 0.0) {
-                                stringstream s;
-                                s << "dy=" << commonDy << "hs";
-                                tag->add (guidoparam::create(s.str(), false));
+                            const bool hasTempoDy = tempoTextParameters.find("dy=") != std::string::npos;
+                            if (!hasTempoDy) {
+                                /// Take into account group positioning
+                                float posy = xml2guidovisitor::getYposition(element, 0, true);
+                                if (posy != 0.0) {
+                                    const float tempoYOffset = sIsMuseScore ? 4.0f : -4.0f;
+                                    commonDy = std::max(commonDy, xml2guidovisitor::getYposition(element, tempoYOffset, true));
+                                }
+
+                                // apply inherited Y-position
+                                if (commonDy != 0.0) {
+                                    stringstream s;
+                                    s << "dy=" << commonDy << "hs";
+                                    tag->add (guidoparam::create(s.str(), false));
+                                }
                             }
                             
                             /// Add Tag
