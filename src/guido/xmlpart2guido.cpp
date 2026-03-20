@@ -1303,6 +1303,11 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                     tag->add (guidoparam::create(durationDxParam(offset), false));
                                 } else {
                                     float markDx = timePositions.getDxForElement(element, fCurrentVoicePosition.toDouble(), fCurrentMeasure->getAttributeValue("number"), 0, directionStaff, offset.toDouble());
+                                    if (sIsMuseScore) {
+                                        // MuseScore rehearsal marks can export a measure-relative default-x.
+                                        // Keep only explicit relative-x tweaks and otherwise anchor to time.
+                                        markDx = xml2guidovisitor::getXposition(element, 0.0f) - element->getAttributeFloatValue("default-x", 0.0f) / 10.0f * 2.0f;
+                                    }
                                     if (markDx != -999 && markDx != 0) {
                                         stringstream s;
                                         s << "dx=" << markDx ;
