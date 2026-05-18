@@ -1078,18 +1078,17 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                 }
                                 parameters << ", dy="<<commonDy<<"hs";
                                 
-                                // Determine horizontal position, if either offset, default-x or relative-x are present.
-                                float default_x = 0.0; //element->getAttributeFloatValue("default-x", 0.);
-                                // NOTE: for "tempo" tag, we should neglect the default-x in musicXML's direction since it is from the beginning of the measure!
+                                // Determine horizontal position from the musical offset or from explicit
+                                // visual tweaks. Ignore MusicXML default-x for tempo words: direction
+                                // children use a measure-origin x, while Guido already anchors the tempo
+                                // tag at the current musical position.
                                 float rel_x = element->getAttributeFloatValue("relative-x", 0.);
                                 if (fCurrentOffset != 0) {
                                     rational offset(fCurrentOffset, fCurrentDivision*4);
                                     parameters << ", " << durationDxParam(offset);
-                                } else if ((default_x != 0.0)||(rel_x != 0.0)) {
-                                    // For Tempo, we should always search from the BEGINNING of measure (hence position = 0.0)
-                                    rational offset(fCurrentOffset, fCurrentDivision*4);
-                                    float wordDx = timePositions.getDxRelativeToMeasureForElement(element, fCurrentMeasure->getAttributeValue("number"), 0, offset.toDouble());
-                                    if (wordDx != -999 && wordDx != 0) {
+                                } else if (rel_x != 0.0) {
+                                    float wordDx = (rel_x / 10.0f) * 2.0f;
+                                    if (wordDx != 0) {
                                         parameters << ", dx=" << wordDx;
                                     }
                                 }
