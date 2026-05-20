@@ -76,8 +76,8 @@ EXP const char*   musicxml2guidoVersionStr();
   \brief Converts a MusicXML representation to the Guido format.
   \param file a file name 
   \param generateBars a boolean to force barlines generation
-  \param beginMeasure for Partial conversion: start measure number (default: 0)
-  \param endMeasure for Partial conversion: end measure number (default: infinite)
+  \param beginMeasure for Partial conversion: first measure number to include (default: 0)
+  \param endMeasure for Partial conversion: last measure number to include (default: infinite)
   \param partFilter Part number to convert or 0 for all (default: 0)
   \param out the output stream
   \return an error code (\c kNoErr when success)
@@ -88,8 +88,8 @@ EXP xmlErr      musicxmlfile2guido  (const char *file, bool generateBars, int be
   \brief Converts a MusicXML representation to the Guido format.
   \param fd a file descriptor 
   \param generateBars a boolean to force barlines generation
-  \param beginMeasure for Partial conversion: start measure number (default: 0)
-  \param endMeasure for Partial conversion: end measure number (default: infinite)
+  \param beginMeasure for Partial conversion: first measure number to include (default: 0)
+  \param endMeasure for Partial conversion: last measure number to include (default: infinite)
   \param partFilter Part number to convert or 0 for all (default: 0)
   \param out the output stream
   \return an error code (\c kNoErr when success)
@@ -126,8 +126,8 @@ EXP xmlErr      musicxmlstring2guidoOnPart(const char * buffer, bool generateBar
  \param buffer a string containing MusicXML code
  \param generateBars a boolean to force barlines generation
  \param partFilter 0 for all parts. Part number only otherwise.
- \param beginMeasure Beginning measure number
- \param endMeasure Ending measure number
+ \param beginMeasure Beginning measure number to include
+ \param endMeasure Ending measure number to include
  \param out the output stream
  \return an error code (\c kNoErr when success)
  */

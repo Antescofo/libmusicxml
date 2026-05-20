@@ -54,8 +54,15 @@ static xmlErr partialxml2guido(SXMLFile& xmlfile, bool generateBars, int partFil
     Sxmlelement st = xmlfile->elements();
     if (st) {
         if (st->getName() == "score-timewise") return kUnsupported;
-        
-        xml2guidovisitor v(true, true, generateBars, partFilter, beginMeasure, endMeasure);
+
+        // The public API exposes begin/end measures as an inclusive range.
+        // xml2guidovisitor expects explicit beat/measure offsets and treats the
+        // end boundary as exclusive, so endMeasureOffset=1 keeps old callers'
+        // measure-only semantics intact.
+        int endMeasureOffset = endMeasure > 0 ? 1 : 0;
+        xml2guidovisitor v(true, true, generateBars, partFilter,
+                           beginMeasure, 0.0,
+                           endMeasure, endMeasureOffset, 0.0);
         Sguidoelement gmn = v.convert(st);
         if (file) {
             out << "(*\n  gmn code converted from '" << file << "'"
