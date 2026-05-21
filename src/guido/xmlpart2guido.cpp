@@ -1373,7 +1373,7 @@ void xmlpart2guido::visitEnd(S_harmony& elt) {
         }
     }
     
-    if (harmonyVoice != fTargetVoice) return;
+    if (harmonyVoice == kUndefinedVoice || harmonyVoice != fTargetVoice) return;
     
     // Note: Numeral and Function Harmonies are not supported yet in GuidoLib
     if (elt->find(k_function) != elt->end())

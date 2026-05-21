@@ -115,10 +115,15 @@ void partsummary::visitStart ( S_forward& elt )
 {
     int duration = elt->getIntValue(k_duration, 0);
     int voice = elt->getIntValue(k_voice, kUndefinedVoice);
-    if (voice != kUndefinedVoice)
+    if (voice != kUndefinedVoice) {
         fCurrentVoiceNumber = voice;
+        fVoices.emplace(voice, 0); // emplace will do nothing if 'voice' is already a key
+    } else {
+        // MusicXML allows forward without voice; keep timing on the current voice
+        // without registering the undefined voice as a real conversion target.
+        voice = fCurrentVoiceNumber;
+    }
     
-    fVoices.emplace(voice, 0); // emplace will do nothing if 'voice' is already a key
     moveMeasureTime(duration, voice);
 }
 
