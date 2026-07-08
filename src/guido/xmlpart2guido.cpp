@@ -2738,7 +2738,7 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
                             if (iterTuplet != iter->end())
                             {
                                 // There is a tuplet tag!
-                                int newTupletNumber = iterTuplet->getAttributeIntValue("number", 0);
+                                int newTupletNumber = iterTuplet->getAttributeIntValue("number", thisTupletNumber);
                                 if ((iterTuplet->getAttributeValue("type")=="stop")&&(newTupletNumber==thisTupletNumber))
                                 {
                                     break;
@@ -2778,7 +2778,7 @@ std::vector< std::pair<int, int> >::const_iterator xmlpart2guido::findSlur ( con
                         if (iterTuplet != iter->end())
                         {
                             // There is a tuplet tag!
-                            int newTupletNumber = iterTuplet->getAttributeIntValue("number", 0);
+                            int newTupletNumber = iterTuplet->getAttributeIntValue("number", thisTupletNumber);
                             if ((iterTuplet->getAttributeValue("type")=="stop")&&(newTupletNumber==thisTupletNumber))
                             {
                                 break;
