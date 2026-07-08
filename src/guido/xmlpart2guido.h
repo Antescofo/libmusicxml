@@ -294,6 +294,11 @@ private:
     static bool sIsMuseScore;
 
     std::string getClef(int staffIndex, rational pos, int measureNum);
+
+    /// Returns the Guido dy for words promoted to tempo marks.
+    /// MuseScore often exports large relative-y values as page-layout tweaks;
+    /// those should not become stable Guido tempo offsets.
+    float tempoWordsYPosition(Sxmlelement elt, float yoffset, bool useDefault = true) const;
     
     void addPosYforNoteHead(const notevisitor& nv, Sxmlelement elt, Sguidoelement& tag, float offset);
     void addPosYforNoteHead(const notevisitor& nv, float xmlY, Sguidoelement& tag, float offset);

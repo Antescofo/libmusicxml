@@ -817,6 +817,29 @@ void xmlpart2guido::checkOctavaPendingEnd() {
     }
     
     //______________________________________________________________________________
+    float xmlpart2guido::tempoWordsYPosition(Sxmlelement elt, float yoffset, bool useDefault) const
+    {
+        if (!sIsMuseScore) {
+            return xml2guidovisitor::getYposition(elt, yoffset, useDefault);
+        }
+
+        // MuseScore uses large relative-y values on tempo words as page-layout
+        // displacements. Carrying them verbatim into Guido makes marks like
+        // "a tempo" and "Même mouvement" float far above the staff. Preserve
+        // useful local offsets, but cap the staff-relative height before applying
+        // Guido's tempo anchor correction.
+        const float kMaxMuseScoreTempoY = 30.0f;
+        float posy = (useDefault ? elt->getAttributeFloatValue("default-y", 0) : 0.0f)
+                + elt->getAttributeFloatValue("relative-y", 0);
+        if (posy > kMaxMuseScoreTempoY) {
+            posy = kMaxMuseScoreTempoY;
+        }
+        posy = (posy / 10.0f) * 2.0f;
+        posy += yoffset;
+        return posy;
+    }
+
+    //______________________________________________________________________________
     void xmlpart2guido::visitEnd ( S_direction& elt )
     {
         // !IMPORTANT: Avoid using default-x directly and use timePositions methods instead for all horizontal positioning of Directions, since it is relative to the beginning of a measure.
@@ -1069,10 +1092,11 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                                 parameters << ",fattrib=\""+fattrib+"\"";
                             
                             if (generateTempo) {
-                                // MuseScore tempo positions are staff-top relative, while older exports
-                                // were tuned against Guido's historic tempo anchor.
+                                // Tempo words are emitted as Guido tempo marks. Use a source-aware
+                                // vertical position so MuseScore layout displacements do not become
+                                // large persistent Guido offsets.
                                 const float tempoYOffset = sIsMuseScore ? 4.0f : -4.0f;
-                                float tempoDy = xml2guidovisitor::getYposition(element, tempoYOffset, true);
+                                float tempoDy = tempoWordsYPosition(element, tempoYOffset, true);
                                 if (tempoDy > commonDy) {
                                     commonDy = tempoDy;
                                 }
@@ -1244,10 +1268,10 @@ void xmlpart2guido::checkOctavaPendingEnd() {
                             const bool hasTempoDy = tempoTextParameters.find("dy=") != std::string::npos;
                             if (!hasTempoDy) {
                                 /// Take into account group positioning
-                                float posy = xml2guidovisitor::getYposition(element, 0, true);
+                                float posy = tempoWordsYPosition(element, 0, true);
                                 if (posy != 0.0) {
                                     const float tempoYOffset = sIsMuseScore ? 4.0f : -4.0f;
-                                    commonDy = std::max(commonDy, xml2guidovisitor::getYposition(element, tempoYOffset, true));
+                                    commonDy = std::max(commonDy, tempoWordsYPosition(element, tempoYOffset, true));
                                 }
 
                                 // apply inherited Y-position
