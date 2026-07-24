@@ -49,7 +49,8 @@ class EXP partsummary :
     public visitor<S_direction>
 {
 	public:
-				 partsummary() : fStavesCount(1) {
+				 partsummary() : fStavesCount(1), fHasWrittenMidiPitchRange(false),
+                                 fWrittenMidiPitchMin(0.0), fWrittenMidiPitchMax(0.0) {
                  };
 		virtual	~partsummary() {};
 		
@@ -77,6 +78,13 @@ class EXP partsummary :
 		int getVoiceNotes (int voiceid) const;
 		//! returns the count of notes on a voice and a staff
 		int getVoiceNotes (int staffid, int voiceid) const;
+
+        /*! Returns the written MIDI pitch range accumulated for this part.
+            MusicXML octave numbering is normalized to conventional MIDI
+            numbering (C4 = 60). Cue, rest and unpitched notes are excluded.
+            Grace notes and every pitch in a chord are included.
+         */
+        bool getWrittenMidiPitchRange(double& minimum, double& maximum) const;
     // staff distance from S_print
     std::map<int, int> fStaffDistances;
     
@@ -110,6 +118,10 @@ class EXP partsummary :
 		std::map<int, int>	fVoices;
 		// staves and corresponding voices + count of notes
 		std::map<int, std::map<int, int> >	fStaffVoices;
+
+        bool fHasWrittenMidiPitchRange;
+        double fWrittenMidiPitchMin;
+        double fWrittenMidiPitchMax;
     
     // Internal map for Voice-Position for on-going measure
     std::map<int, rational>    fCurrentVoicedMeasurePosition;

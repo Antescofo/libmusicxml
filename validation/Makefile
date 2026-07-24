@@ -21,12 +21,20 @@ XML2GUIDO ?= xml2guido
 XMLREAD   ?= xmlread
 MAKE      ?= make
 
-.PHONY: read guido 
+.PHONY: read guido pitchrange
 .DELETE_ON_ERROR:
 
 all:
 	$(MAKE) read
 	$(MAKE) guido
+
+# Focused source-level validation for selected-part written MIDI ranges.
+# Requires the regular static library build at ../build/lib/libmusicxml2.a.
+pitchrange:
+	@set -e; trap 'rm -f .pitchrange-test' EXIT; \
+	$(CXX) -std=c++17 $(addprefix -I../src/, elements files guido interface lib operations parser visitors) \
+		pitchrange.cpp ../build/lib/libmusicxml2.a -o .pitchrange-test; \
+	./.pitchrange-test
 
 travis:
 	$(MAKE) read
@@ -117,4 +125,3 @@ $(version)/guidosvg/%.svg: $(version)/gmn/%.gmn
 	$(eval tmp := $(patsubst $(version)/%, $(VERSION)/%, $<))
 	@[ -f  $(tmp) ] || echo $< : new file
 	@diff $<  $(tmp) 2>/dev/null >/dev/null || ([ -f  $(tmp) ] && echo "open -t $< $(patsubst $(version)/%, $(VERSION)/%, $<) # to check changes"; true)
-

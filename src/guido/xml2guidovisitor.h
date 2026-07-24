@@ -106,6 +106,7 @@ protected:
     int  fCurrentAccoladeIndex;
     
     int  fPartNum;  // 0 (default) to parse all score-parts. 1 for "P1" only, etc.
+    int  fPitchRangePartNum; // independent part selection for written pitch range
     int fPartsAvailable; // number of parts available in this XML
     
     int fBeginMeasure;      // Number of measure to begin parsing, used for partial conversion. (default = 0)
@@ -137,11 +138,27 @@ protected:
     std::map<double, std::pair<int, int>> timeSignatureMap;
     
     double fTotalDuration;
+
+    bool fSoloPartVisited;
+    bool fHasSoloWrittenPitchRange;
+    double fSoloWrittenPitchRangeMin;
+    double fSoloWrittenPitchRangeMax;
     
 public:
+    /*! Convert MusicXML to Guido.
+
+        partNum controls rendering: 0 renders every part and a positive value
+        renders only P<partNum>.
+
+        pitchRangePartNum independently controls the part inspected by the
+        written-pitch-range accessors. A positive value selects
+        P<pitchRangePartNum>, 0 selects the first document part, and the
+        default -1 follows partNum for backward compatibility.
+     */
     xml2guidovisitor(bool generateComments, bool generateStem, bool generateBar=true, int partNum = 0,
                      int beginMeasure = 0, double beginMeasureOffset = 0.0,
-                     int endMeasure = 0, int endMeasureOffset = 0, double endMeasureBeatoffset = 0);
+                     int endMeasure = 0, int endMeasureOffset = 0, double endMeasureBeatoffset = 0,
+                     int pitchRangePartNum = -1);
     virtual ~xml2guidovisitor() {}
     
     Sguidoelement convert (const Sxmlelement& xml);
@@ -212,6 +229,27 @@ public:
     
     /// Returne the number of parts in this XML Score
     int getPartsAvailable();
+
+    /*! True when the selected solo part contains at least one non-cue,
+        pitched note.
+
+        The range covers the complete selected pitch-range part, independently
+        of both partial rendering boundaries and the rendered part selection.
+        pitchRangePartNum > 0 selects P<pitchRangePartNum>. A value of 0
+        selects the first document part. The constructor default (-1) preserves
+        compatibility by using partNum as the pitch-range part selection.
+     */
+    bool hasSoloWrittenPitchRange() const;
+
+    /*! Minimum written pitch of the selected solo part as conventional MIDI
+        (C4 = 60). Only valid when hasSoloWrittenPitchRange() is true.
+     */
+    double getSoloWrittenPitchRangeMin() const;
+
+    /*! Maximum written pitch of the selected solo part as conventional MIDI
+        (C4 = 60). Only valid when hasSoloWrittenPitchRange() is true.
+     */
+    double getSoloWrittenPitchRangeMax() const;
 
     bool isMuseScoreSource() const;
     const std::string& getSoftware() const;

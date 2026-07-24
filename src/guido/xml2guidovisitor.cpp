@@ -75,13 +75,17 @@ namespace MusicXML2
     //______________________________________________________________________________
     xml2guidovisitor::xml2guidovisitor(bool generateComments, bool generateStem, bool generateBar, int partNum,
                                        int beginMeasure, double beginMeasureOffset,
-                                       int endMeasure, int endMeasureOffset, double endMeasureBeatOffset) :
+                                       int endMeasure, int endMeasureOffset, double endMeasureBeatOffset,
+                                       int pitchRangePartNum) :
     fGenerateComments(generateComments), fGenerateStem(generateStem),
     fGenerateBars(generateBar), fGeneratePositions(true),
-    fCurrentStaffIndex(0), fCurrentPartStaffOffset(0), previousStaffHasLyrics(false), fCurrentAccoladeIndex(0), fPartNum(partNum),
+    fCurrentStaffIndex(0), fCurrentPartStaffOffset(0), previousStaffHasLyrics(false), fCurrentAccoladeIndex(0),
+    fPartNum(partNum), fPitchRangePartNum(pitchRangePartNum < 0 ? partNum : pitchRangePartNum),
     fBeginMeasure(beginMeasure), fBeginMeasureBeatOffset(beginMeasureOffset),
     fEndMeasure(endMeasure), fEndMeasureOffset(endMeasureOffset), fEndMeasureBeatOffset(endMeasureBeatOffset),
-    fTotalMeasures(0), fTotalDuration(0.0)
+    fTotalMeasures(0), fTotalDuration(0.0),
+    fSoloPartVisited(false), fHasSoloWrittenPitchRange(false),
+    fSoloWrittenPitchRangeMin(0.0), fSoloWrittenPitchRangeMax(0.0)
     {
         fPartsAvailable = 0;
         resetSoftwareInfo();
@@ -250,20 +254,36 @@ namespace MusicXML2
         currentPart = elt->getAttributeValue("id");
         stavesInPart[currentPart] = 1;
         fPartsAvailable++;
-        
-        // Filter out score-part here
-        if (fPartNum != 0) {
-            std::stringstream s;
-            s << "P"<<fPartNum;
-            std::string thisPart = elt->getAttributeValue("id");
-            if ( thisPart != s.str() ) {
-                return;
-            }
-        }
+
+        const std::string thisPart = elt->getAttributeValue("id");
+        std::stringstream renderedPartID;
+        renderedPartID << "P" << fPartNum;
+        std::stringstream pitchRangePartID;
+        pitchRangePartID << "P" << fPitchRangePartNum;
+
+        const bool shouldRenderPart = fPartNum == 0 || thisPart == renderedPartID.str();
+        const bool shouldMeasurePitchRange =
+            !fSoloPartVisited
+            && (fPitchRangePartNum == 0 || thisPart == pitchRangePartID.str());
+
+        // A separately selected pitch-range part still needs its summary, but
+        // must never leak into the rendered Guido score.
+        if (!shouldRenderPart && !shouldMeasurePitchRange) return;
         
         partsummary ps;
         xml_tree_browser browser(&ps);
         browser.browse(*elt);
+
+        // Reuse the summary traversal that conversion already requires. The
+        // range always describes the complete selected part, even when this
+        // visitor was configured to render only an excerpt.
+        if (shouldMeasurePitchRange) {
+            fSoloPartVisited = true;
+            fHasSoloWrittenPitchRange = ps.getWrittenMidiPitchRange(
+                fSoloWrittenPitchRangeMin, fSoloWrittenPitchRangeMax);
+        }
+
+        if (!shouldRenderPart) return;
         
         smartlist<int>::ptr voices = ps.getVoices ();
         int targetStaff = -1;	// initialized to a value we'll unlikely encounter
@@ -913,6 +933,18 @@ double xml2guidovisitor::getTotalDuration() {
 
 int xml2guidovisitor::getPartsAvailable() {
     return fPartsAvailable;
+}
+
+bool xml2guidovisitor::hasSoloWrittenPitchRange() const {
+    return fHasSoloWrittenPitchRange;
+}
+
+double xml2guidovisitor::getSoloWrittenPitchRangeMin() const {
+    return fSoloWrittenPitchRangeMin;
+}
+
+double xml2guidovisitor::getSoloWrittenPitchRangeMax() const {
+    return fSoloWrittenPitchRangeMax;
 }
 
 bool xml2guidovisitor::isMuseScoreSource() const { return gIsMuseScore; }

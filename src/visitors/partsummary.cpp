@@ -14,6 +14,9 @@
 # pragma warning (disable : 4786)
 #endif
 
+#include <algorithm>
+#include <cmath>
+
 #include "partsummary.h"
 
 using namespace std;
@@ -28,6 +31,9 @@ void partsummary::visitStart ( S_part& elt)
 	fStaves.clear();
 	fVoices.clear();
 	fStaffVoices.clear();
+    fHasWrittenMidiPitchRange = false;
+    fWrittenMidiPitchMin = 0.0;
+    fWrittenMidiPitchMax = 0.0;
     fCurrentVoiceNumber = 1;
     fHarmonyVoices.clear();
 }
@@ -65,6 +71,30 @@ void partsummary::visitStart ( S_staves& elt)
 void partsummary::visitEnd ( S_note& elt)
 {
 	notevisitor::visitEnd (elt);
+
+    // Normalize only this new API to conventional MIDI C4=60. This must
+    // happen before the chord early return so every chord tone can contribute
+    // an extremum.
+    if (!isCue() && (getType() == kPitched)) {
+        const int step = notevisitor::step2i(getStep());
+        static const int chromaticSteps[] = { 0, 2, 4, 5, 7, 9, 11 };
+        if (step >= 0) {
+            const double midiPitch = (static_cast<double>(getOctave()) + 1.0) * 12.0
+                                   + chromaticSteps[step]
+                                   + static_cast<double>(getAlter());
+            if (std::isfinite(midiPitch)) {
+                if (!fHasWrittenMidiPitchRange) {
+                    fWrittenMidiPitchMin = midiPitch;
+                    fWrittenMidiPitchMax = midiPitch;
+                    fHasWrittenMidiPitchRange = true;
+                } else {
+                    fWrittenMidiPitchMin = std::min(fWrittenMidiPitchMin, midiPitch);
+                    fWrittenMidiPitchMax = std::max(fWrittenMidiPitchMax, midiPitch);
+                }
+            }
+        }
+    }
+
     if (inChord()) return;
     if (!isGrace() && (getType() != kRest) ) {
         std::string fCurrentMeasureNumber = fCurrentMeasure->getAttributeValue("number");
@@ -80,6 +110,14 @@ void partsummary::visitEnd ( S_note& elt)
     fStaves[notevisitor::getStaff()]++;
 	fVoices[notevisitor::getVoice()]++;
 	fStaffVoices[notevisitor::getStaff()][notevisitor::getVoice()]++;
+}
+
+bool partsummary::getWrittenMidiPitchRange(double& minimum, double& maximum) const
+{
+    if (!fHasWrittenMidiPitchRange) return false;
+    minimum = fWrittenMidiPitchMin;
+    maximum = fWrittenMidiPitchMax;
+    return true;
 }
 
 void partsummary::visitStart ( S_measure& elt )
